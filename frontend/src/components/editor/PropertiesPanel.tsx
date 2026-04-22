@@ -1,0 +1,223 @@
+import { fabric } from 'fabric';
+
+interface PropertiesPanelProps {
+  selectedObject: fabric.Object | null;
+  canvas: fabric.Canvas | null;
+  onUpdate: () => void;
+  background: string;
+  onBackgroundChange: (color: string) => void;
+  historySteps: string[];
+  historyIndex: number;
+  onJumpHistory: (i: number) => void;
+}
+
+const FONTS = ['Inter', 'Arial', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS', 'Trebuchet MS', 'Palatino'];
+const FILTER_PRESETS = [
+  { label: 'None', filters: [] },
+  { label: 'Grayscale', filters: [new fabric.Image.filters.Grayscale()] },
+  { label: 'Sepia', filters: [new fabric.Image.filters.Sepia()] },
+  { label: 'Invert', filters: [new fabric.Image.filters.Invert()] },
+  { label: 'Blur', filters: [new fabric.Image.filters.Blur({ blur: 0.2 })] },
+  { label: 'Sharpen', filters: [new fabric.Image.filters.Convolute({ matrix: [0, -1, 0, -1, 5, -1, 0, -1, 0] })] },
+  { label: 'Emboss', filters: [new fabric.Image.filters.Convolute({ matrix: [1, 1, 1, 1, 0.7, -1, -1, -1, -1] })] },
+];
+
+export default function PropertiesPanel({ selectedObject, canvas, onUpdate, background, onBackgroundChange, historySteps, historyIndex, onJumpHistory }: PropertiesPanelProps) {
+  const obj = selectedObject;
+
+  const set = (prop: string, value: any) => {
+    if (!obj || !canvas) return;
+    (obj as any).set(prop, value);
+    canvas.renderAll();
+    onUpdate();
+  };
+
+  const applyFilter = (filters: fabric.IBaseFilter[]) => {
+    if (!obj || obj.type !== 'image') return;
+    const img = obj as fabric.Image;
+    img.filters = filters;
+    img.applyFilters();
+    canvas?.renderAll();
+    onUpdate();
+  };
+
+  const setBrightness = (value: number) => {
+    if (!obj || obj.type !== 'image') return;
+    const img = obj as fabric.Image;
+    const existing = (img.filters || []).filter((f: any) => !(f instanceof fabric.Image.filters.Brightness));
+    img.filters = [...existing, new fabric.Image.filters.Brightness({ brightness: value })];
+    img.applyFilters();
+    canvas?.renderAll();
+    onUpdate();
+  };
+
+  const sectionTitle = (title: string) => (
+    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, marginTop: 16 }}>{title}</div>
+  );
+
+  const row = (label: string, control: React.ReactNode) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+      <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>{label}</label>
+      <div style={{ flex: 1 }}>{control}</div>
+    </div>
+  );
+
+  const numInput = (prop: string, value: number | undefined, min = 0, max = 9999, step = 1) => (
+    <input type="number" value={Math.round(value ?? 0)} min={min} max={max} step={step}
+      onChange={(e) => set(prop, parseFloat(e.target.value))}
+      style={{ width: '100%', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg)' }}
+    />
+  );
+
+  return (
+    <div style={{ width: 240, background: 'var(--surface)', borderLeft: '1px solid var(--border)', padding: '16px', overflowY: 'auto', flexShrink: 0 }}>
+      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Properties</h3>
+
+      {sectionTitle('Canvas Background')}
+      <input type="color" value={background} onChange={(e) => onBackgroundChange(e.target.value)}
+        style={{ width: '100%', height: 36, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+
+      {!obj && (
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
+          Select an object to edit its properties
+        </p>
+      )}
+
+      {obj && (
+        <>
+          {sectionTitle('Transform')}
+          {row('X', numInput('left', (obj as any).left))}
+          {row('Y', numInput('top', (obj as any).top))}
+          {row('Width', numInput('scaleX', undefined, 0.01, 20, 0.01))}
+          {row('Angle', numInput('angle', (obj as any).angle, 0, 360))}
+          {row('Opacity', (
+            <input type="range" min={0} max={1} step={0.01} value={(obj as any).opacity ?? 1}
+              onChange={(e) => set('opacity', parseFloat(e.target.value))}
+              style={{ width: '100%' }} />
+          ))}
+
+          {obj.type !== 'image' && (
+            <>
+              {sectionTitle('Fill & Stroke')}
+              {row('Fill', (
+                <input type="color" value={(obj as any).fill || '#000000'}
+                  onChange={(e) => set('fill', e.target.value)}
+                  style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+              ))}
+              {row('Stroke', (
+                <input type="color" value={(obj as any).stroke || '#000000'}
+                  onChange={(e) => set('stroke', e.target.value)}
+                  style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+              ))}
+              {row('Stroke W', numInput('strokeWidth', (obj as any).strokeWidth, 0, 50))}
+            </>
+          )}
+
+          {(obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && (
+            <>
+              {sectionTitle('Typography')}
+              {row('Font', (
+                <select value={(obj as any).fontFamily || 'Inter'}
+                  onChange={(e) => set('fontFamily', e.target.value)}
+                  style={{ width: '100%', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg)' }}>
+                  {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+              ))}
+              {row('Size', numInput('fontSize', (obj as any).fontSize, 6, 300))}
+              {row('Color', (
+                <input type="color" value={(obj as any).fill || '#000000'}
+                  onChange={(e) => set('fill', e.target.value)}
+                  style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+              ))}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                {['bold', 'italic', 'underline'].map((style) => (
+                  <button key={style} onClick={() => {
+                    const prop = style === 'bold' ? 'fontWeight' : style === 'italic' ? 'fontStyle' : 'underline';
+                    const cur = (obj as any)[prop];
+                    if (style === 'bold') set('fontWeight', cur === 'bold' ? 'normal' : 'bold');
+                    else if (style === 'italic') set('fontStyle', cur === 'italic' ? 'normal' : 'italic');
+                    else set('underline', !cur);
+                  }} style={{
+                    padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)',
+                    background: 'var(--bg)', fontSize: 13, cursor: 'pointer',
+                    fontWeight: style === 'bold' ? 700 : 400,
+                    fontStyle: style === 'italic' ? 'italic' : 'normal',
+                  }}>
+                    {style.charAt(0).toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              {row('Align', (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {['left', 'center', 'right'].map((a) => (
+                    <button key={a} onClick={() => set('textAlign', a)} style={{
+                      flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--border)',
+                      background: (obj as any).textAlign === a ? 'var(--primary)' : 'var(--bg)',
+                      color: (obj as any).textAlign === a ? '#fff' : 'var(--text)',
+                      fontSize: 12, cursor: 'pointer',
+                    }}>
+                      {a === 'left' ? '⬅' : a === 'center' ? '↔' : '➡'}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </>
+          )}
+
+          {obj.type === 'image' && (
+            <>
+              {sectionTitle('Brightness')}
+              <input type="range" min={-1} max={1} step={0.05} defaultValue={0}
+                onChange={(e) => setBrightness(parseFloat(e.target.value))}
+                style={{ width: '100%' }} />
+              {sectionTitle('Filters')}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {FILTER_PRESETS.map((fp) => (
+                  <button key={fp.label} onClick={() => applyFilter(fp.filters)} style={{
+                    padding: '6px 4px', borderRadius: 6, border: '1px solid var(--border)',
+                    background: 'var(--bg)', fontSize: 11, cursor: 'pointer',
+                  }}>
+                    {fp.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+      <div style={{ marginTop: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+          Історія ({historySteps.length})
+        </div>
+        <div style={{
+          maxHeight: 220, overflowY: 'auto', border: '1px solid var(--border)',
+          borderRadius: 8, background: 'var(--bg)',
+        }}>
+          {historySteps.length === 0 && (
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '10px 10px' }}>Порожньо</div>
+          )}
+          {[...historySteps].reverse().map((lbl, ri) => {
+            const i = historySteps.length - 1 - ri;
+            const isActive = i === historyIndex;
+            const isFuture = i > historyIndex;
+            return (
+              <button key={i} onClick={() => onJumpHistory(i)} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                width: '100%', padding: '5px 10px', border: 'none',
+                background: isActive ? 'rgba(108,99,255,.18)' : 'transparent',
+                color: isActive ? 'var(--primary)' : isFuture ? 'var(--text-muted)' : 'var(--text)',
+                fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                textDecoration: isFuture ? 'line-through' : 'none',
+                opacity: isFuture ? 0.45 : 1,
+                borderLeft: isActive ? '2px solid var(--primary)' : '2px solid transparent',
+              }}>
+                <span style={{ color: 'var(--text-muted)', fontSize: 10, minWidth: 18, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lbl}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
