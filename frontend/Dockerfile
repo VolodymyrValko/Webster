@@ -6,7 +6,14 @@ COPY . .
 RUN npm run build
 
 FROM nginx:alpine
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Store as template — envsubst fills in $BACKEND_URL at container start
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+
+# Substitute env vars into nginx config, then start nginx
+CMD ["/bin/sh", "-c", "envsubst '$BACKEND_URL' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
