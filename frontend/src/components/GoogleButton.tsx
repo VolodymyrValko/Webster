@@ -4,7 +4,10 @@ interface GoogleButtonProps {
 
 export default function GoogleButton({ label = 'Continue with Google' }: GoogleButtonProps) {
   const handleClick = () => {
-    window.location.href = '/api/auth/google';
+    const base = import.meta.env.VITE_API_URL
+      ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
+      : '';
+    window.location.href = `${base}/api/auth/google`;
   };
 
   return (
