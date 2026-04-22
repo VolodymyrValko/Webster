@@ -93,10 +93,7 @@ export default function LandingPage() {
         </svg>
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 99, padding: '6px 18px', marginBottom: 28, fontSize: 13 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Безкоштовний онлайн графічний редактор Vizora
-          </div>
+
           <h1 style={{ fontSize: 'clamp(34px, 5.5vw, 66px)', fontFamily: 'Playfair Display, serif', marginBottom: 22, lineHeight: 1.1, letterSpacing: '-0.5px' }}>
             Створюйте красиві візуали<br />
             <span style={{ color: '#c4b5fd' }}>без навичок дизайну</span>
