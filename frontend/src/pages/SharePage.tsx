@@ -39,8 +39,8 @@ export default function SharePage() {
     const w = design.width;
     const h = design.height;
 
-    const maxW = Math.min(window.innerWidth - 48, 960);
-    const maxH = Math.round(window.innerHeight * 0.72);
+    const maxW = Math.min(window.innerWidth - 48, 560);
+    const maxH = Math.min(Math.round(window.innerHeight * 0.55), 480);
     const scale = Math.min(maxW / w, maxH / h, 1);
     const dispW = Math.round(w * scale);
     const dispH = Math.round(h * scale);
