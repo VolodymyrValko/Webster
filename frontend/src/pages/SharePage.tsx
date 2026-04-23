@@ -40,23 +40,25 @@ export default function SharePage() {
     const h = design.height;
 
     const maxW = Math.min(window.innerWidth - 48, 960);
-    const maxH = window.innerHeight * 0.65;
+    const maxH = Math.round(window.innerHeight * 0.72);
     const scale = Math.min(maxW / w, maxH / h, 1);
     const dispW = Math.round(w * scale);
     const dispH = Math.round(h * scale);
 
     const canvas = new fabric.Canvas(canvasRef.current, {
-      width: dispW,
-      height: dispH,
+      width: w,
+      height: h,
       backgroundColor: canvasData?.background || '#fff',
       selection: false,
       interactive: false,
     });
     fabricRef.current = canvas;
-    canvas.setZoom(scale);
 
     canvas.loadFromJSON(resolveCanvasJsonUrls(canvasData), () => {
       canvas.getObjects().forEach(o => { o.selectable = false; o.evented = false; o.hoverCursor = 'default'; });
+      // Apply scale after load so viewport is not reset
+      canvas.setDimensions({ width: dispW, height: dispH });
+      canvas.setViewportTransform([scale, 0, 0, scale, 0, 0]);
       canvas.renderAll();
     });
 
