@@ -99,17 +99,35 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
           {obj.type !== 'image' && !(obj as any)._isSticker && (
             <>
               {sectionTitle('Заливка і контур')}
-              {row('Заливка', (
-                <input type="color" value={(obj as any).fill || '#000000'}
-                  onChange={(e) => set('fill', e.target.value)}
-                  style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
-              ))}
-              {row('Контур', (
-                <input type="color" value={(obj as any).stroke || '#000000'}
-                  onChange={(e) => set('stroke', e.target.value)}
-                  style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
-              ))}
-              {row('Товщина', numInput('strokeWidth', (obj as any).strokeWidth, 0, 50))}
+              {(() => {
+                const hasFill   = (obj as any).fill   && (obj as any).fill   !== 'transparent';
+                const hasStroke = (obj as any).stroke && (obj as any).stroke !== 'transparent';
+                const fillVal   = hasFill   ? (obj as any).fill   : '#6c63ff';
+                const strokeVal = hasStroke ? (obj as any).stroke : '#1a1a2e';
+                return (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input type="checkbox" id="chk-fill" checked={hasFill}
+                        onChange={e => { if (!e.target.checked && !hasStroke) return; set('fill', e.target.checked ? fillVal : 'transparent'); }}
+                        style={{ accentColor: 'var(--primary)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+                      <label htmlFor="chk-fill" style={{ fontSize: 12, color: 'var(--text-muted)', width: 56, flexShrink: 0, cursor: 'pointer' }}>Заливка</label>
+                      <input type="color" value={fillVal} disabled={!hasFill}
+                        onChange={e => set('fill', e.target.value)}
+                        style={{ flex: 1, height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: hasFill ? 'pointer' : 'not-allowed', padding: 2, opacity: hasFill ? 1 : 0.4 }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                      <input type="checkbox" id="chk-stroke" checked={hasStroke}
+                        onChange={e => { if (!e.target.checked && !hasFill) return; set('stroke', e.target.checked ? strokeVal : 'transparent'); }}
+                        style={{ accentColor: 'var(--primary)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+                      <label htmlFor="chk-stroke" style={{ fontSize: 12, color: 'var(--text-muted)', width: 56, flexShrink: 0, cursor: 'pointer' }}>Контур</label>
+                      <input type="color" value={strokeVal} disabled={!hasStroke}
+                        onChange={e => set('stroke', e.target.value)}
+                        style={{ flex: 1, height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: hasStroke ? 'pointer' : 'not-allowed', padding: 2, opacity: hasStroke ? 1 : 0.4 }} />
+                    </div>
+                    {hasStroke && row('Товщина', numInput('strokeWidth', (obj as any).strokeWidth, 0, 50))}
+                  </>
+                );
+              })()}
             </>
           )}
 
