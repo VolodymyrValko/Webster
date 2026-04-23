@@ -1,37 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
+  private from: string;
 
   constructor(private config: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: config.get('MAIL_HOST', 'smtp.gmail.com'),
-      port: Number(config.get('MAIL_PORT', '587')),
-      secure: config.get('MAIL_SECURE', 'false') === 'true',
-      auth: {
-        user: config.get('MAIL_USER'),
-        pass: config.get('MAIL_PASS'),
-      },
-    });
+    const apiKey = config.get<string>('RESEND_API_KEY', '');
+    this.resend = new Resend(apiKey);
+    this.from = config.get('MAIL_FROM', 'Webster <onboarding@resend.dev>');
 
-    // Verify SMTP connection on startup
-    this.transporter.verify((err, _ok) => {
-      if (err) {
-        this.logger.error(`SMTP connection failed: ${err.message}`);
-      } else {
-        this.logger.log(`SMTP ready — ${config.get('MAIL_HOST')}:${config.get('MAIL_PORT')} as ${config.get('MAIL_USER')}`);
-      }
-    });
+    if (!apiKey) {
+      this.logger.warn('RESEND_API_KEY is not set — emails will not be sent');
+    } else {
+      this.logger.log(`Email service ready (Resend) — from: ${this.from}`);
+    }
   }
 
   async sendVerificationEmail(to: string, name: string, token: string): Promise<void> {
     const backendUrl = this.config.get('BACKEND_PUBLIC_URL', 'http://localhost:3001');
     const link = `${backendUrl}/api/auth/verify?token=${token}`;
-    const from = this.config.get('MAIL_FROM', '"Webster" <noreply@webster.app>');
 
     const html = `
 <!DOCTYPE html>
@@ -76,26 +67,33 @@ export class EmailService {
 </html>`;
 
     try {
-      const info = await this.transporter.sendMail({
-        from,
+      const { data, error } = await this.resend.emails.send({
+        from: this.from,
         to,
         subject: 'Підтвердіть реєстрацію у Webster',
         html,
       });
-      this.logger.log(`Verification email sent to ${to} (messageId: ${info.messageId})`);
+
+      if (error) {
+        this.logger.error(`Failed to send email to ${to}: ${error.message}`);
+      } else {
+        this.logger.log(`Verification email sent to ${to} (id: ${data?.id})`);
+      }
     } catch (err) {
-      this.logger.error(`Failed to send email to ${to}: ${err.message}`, err.stack);
-      // Don't throw — registration still succeeds; user can resend
+      this.logger.error(`Failed to send email to ${to}: ${err.message}`);
     }
   }
 
   async sendPasswordChangedEmail(to: string, name: string): Promise<void> {
-    const from = this.config.get('MAIL_FROM', '"Webster" <noreply@webster.app>');
-    await this.transporter.sendMail({
-      from,
-      to,
-      subject: 'Ваш акаунт Webster активовано',
-      html: `<p>Привіт, ${name}! Ваш акаунт успішно підтверджено. Ласкаво просимо до Webster 🎨</p>`,
-    }).catch(() => {});
+    try {
+      await this.resend.emails.send({
+        from: this.from,
+        to,
+        subject: 'Ваш акаунт Webster активовано',
+        html: `<p>Привіт, ${name}! Ваш акаунт успішно підтверджено. Ласкаво просимо до Webster 🎨</p>`,
+      });
+    } catch {
+      // silently ignore
+    }
   }
 }
