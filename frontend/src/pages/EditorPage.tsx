@@ -605,7 +605,7 @@ export default function EditorPage() {
     try {
       let savedId: string;
       if (design) {
-        await api.patch(`/designs/${design.id}`, { title, canvasData });
+        await api.patch(`/designs/${design.id}`, { title, width: logicalSizeRef.current.w, height: logicalSizeRef.current.h, canvasData });
         savedId = design.id;
       } else {
         const { data } = await api.post('/designs', { title, width: logicalSizeRef.current.w, height: logicalSizeRef.current.h, canvasData });
@@ -614,9 +614,12 @@ export default function EditorPage() {
         navigate(`/editor/${data.id}`, { replace: true });
       }
       generateThumbnail(c).then(blob => {
-        const form = new FormData();
-        form.append('file', blob, 'thumbnail.jpg');
-        api.patch(`/designs/${savedId}/thumbnail`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          api.patch(`/designs/${savedId}/thumbnail`, { thumbnail: dataUrl });
+        };
+        reader.readAsDataURL(blob);
       }).catch(() => {});
       isDirtyRef.current = false;
       setSaved(true);
