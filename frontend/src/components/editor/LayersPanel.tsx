@@ -78,20 +78,14 @@ export default function LayersPanel({ canvas, objects, selectedObject, onSelect,
     const srcRi = dragIndexRef.current;
     if (srcRi === null || srcRi === targetRi || !canvas) return;
 
-    // reversed indices → original indices
+    // reversed indices → original indices in _objects array
     const srcI = objects.length - 1 - srcRi;
     const tgtI = objects.length - 1 - targetRi;
 
-    const obj = objects[srcI];
-    canvas.remove(obj);
-    // After remove, recalc target position
-    const remaining = canvas.getObjects();
-    const insertAt = Math.max(0, Math.min(tgtI, remaining.length));
-    remaining.splice(insertAt, 0, obj);
-    // Re-insert all objects in correct order
-    canvas.clear();
-    remaining.forEach(o => canvas.add(o));
-    if (selectedObject) canvas.setActiveObject(selectedObject);
+    // Manipulate internal array directly — no object:added/removed events fired
+    const internal = (canvas as any)._objects as fabric.Object[];
+    const [moved] = internal.splice(srcI, 1);
+    internal.splice(tgtI, 0, moved);
     canvas.renderAll();
     onRefresh();
 

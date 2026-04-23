@@ -5,17 +5,9 @@ import { useAuthStore } from '../store/authStore';
 import { Design, Template } from '../types';
 import { resolveUploadUrl } from '../utils/urls';
 import api from '../api/client';
+import { TEMPLATES } from '../components/editor/TemplatesPanel';
 
-const CANVAS_SIZES = [
-  { label: 'Instagram Post',    width: 1080, height: 1080 },
-  { label: 'Instagram Story',   width: 1080, height: 1920 },
-  { label: 'Facebook Cover',    width: 851,  height: 315  },
-  { label: 'Twitter Banner',    width: 1500, height: 500  },
-  { label: 'YouTube Thumbnail', width: 1280, height: 720  },
-  { label: 'Business Card',     width: 1050, height: 600  },
-  { label: 'A4 Poster',         width: 794,  height: 1123 },
-  { label: 'Custom',            width: 800,  height: 600  },
-];
+const SIZE_PRESETS = TEMPLATES.map(t => ({ label: t.label, width: t.width, height: t.height }));
 
 type MainTab = 'designs' | 'templates';
 type TplTab  = 'system' | 'mine';
@@ -31,7 +23,10 @@ export default function DashboardPage() {
   const [loading,      setLoading]      = useState(true);
   const [showNewModal, setShowNewModal] = useState(false);
   const [newTitle,     setNewTitle]     = useState('Untitled Design');
-  const [selectedSize, setSelectedSize] = useState(CANVAS_SIZES[0]);
+  const [selectedSize, setSelectedSize] = useState(SIZE_PRESETS[0]);
+  const [customW,      setCustomW]      = useState(800);
+  const [customH,      setCustomH]      = useState(600);
+  const [showCustom,   setShowCustom]   = useState(false);
   const [activeTab,    setActiveTab]    = useState<MainTab>('designs');
   const [tplTab,       setTplTab]       = useState<TplTab>('system');
 
@@ -47,10 +42,10 @@ export default function DashboardPage() {
   }, []);
 
   const createDesign = async () => {
+    const w = showCustom ? customW : selectedSize.width;
+    const h = showCustom ? customH : selectedSize.height;
     const { data } = await api.post('/designs', {
-      title: newTitle,
-      width: selectedSize.width,
-      height: selectedSize.height,
+      title: newTitle, width: w, height: h,
       canvasData: { version: '5.3.0', objects: [], background: '#ffffff' },
     });
     navigate(`/editor/${data.id}`);
@@ -303,28 +298,52 @@ export default function DashboardPage() {
       {showNewModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 24 }}
           onClick={() => setShowNewModal(false)}>
-          <div className="card fade-in" style={{ width: '100%', maxWidth: 480, padding: 32 }} onClick={e => e.stopPropagation()}>
+          <div className="card fade-in" style={{ width: '100%', maxWidth: 560, padding: 32, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <h2 style={{ marginBottom: 20 }}>Новий дизайн</h2>
             <div style={{ marginBottom: 16 }}>
               <label className="label">Назва</label>
               <input className="input" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
             </div>
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 16 }}>
               <label className="label">Розмір полотна</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {CANVAS_SIZES.map(s => (
-                  <button key={s.label} onClick={() => setSelectedSize(s)} style={{
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                {SIZE_PRESETS.map(s => (
+                  <button key={s.label} onClick={() => { setSelectedSize(s); setShowCustom(false); }} style={{
                     padding: '10px 12px', borderRadius: 8, border: '1.5px solid',
-                    borderColor: selectedSize.label === s.label ? 'var(--primary)' : 'var(--border)',
-                    background: selectedSize.label === s.label ? 'var(--primary-light)' : 'transparent',
-                    color: selectedSize.label === s.label ? 'var(--primary)' : 'var(--text)',
+                    borderColor: !showCustom && selectedSize.label === s.label ? 'var(--primary)' : 'var(--border)',
+                    background: !showCustom && selectedSize.label === s.label ? 'var(--primary-light)' : 'transparent',
+                    color: !showCustom && selectedSize.label === s.label ? 'var(--primary)' : 'var(--text)',
                     textAlign: 'left', fontSize: 13, cursor: 'pointer',
                   }}>
-                    <div style={{ fontWeight: 500 }}>{s.label}</div>
-                    {s.label !== 'Custom' && <div style={{ fontSize: 11, opacity: 0.7 }}>{s.width}×{s.height}</div>}
+                    <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
+                    <div style={{ fontSize: 11, opacity: 0.7 }}>{s.width}×{s.height}</div>
                   </button>
                 ))}
+                <button onClick={() => setShowCustom(true)} style={{
+                  padding: '10px 12px', borderRadius: 8, border: '1.5px solid',
+                  borderColor: showCustom ? 'var(--primary)' : 'var(--border)',
+                  background: showCustom ? 'var(--primary-light)' : 'transparent',
+                  color: showCustom ? 'var(--primary)' : 'var(--text)',
+                  textAlign: 'left', fontSize: 13, cursor: 'pointer',
+                }}>
+                  <div style={{ fontWeight: 500 }}>Власний</div>
+                  <div style={{ fontSize: 11, opacity: 0.7 }}>Задати вручну</div>
+                </button>
               </div>
+              {showCustom && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+                  <div>
+                    <label className="label" style={{ fontSize: 12 }}>Ширина (px)</label>
+                    <input className="input" type="number" min={1} max={10000} value={customW}
+                      onChange={e => setCustomW(Math.max(1, parseInt(e.target.value) || 1))} />
+                  </div>
+                  <div>
+                    <label className="label" style={{ fontSize: 12 }}>Висота (px)</label>
+                    <input className="input" type="number" min={1} max={10000} value={customH}
+                      onChange={e => setCustomH(Math.max(1, parseInt(e.target.value) || 1))} />
+                  </div>
+                </div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setShowNewModal(false)}>Скасувати</button>
