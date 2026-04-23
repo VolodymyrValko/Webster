@@ -64,11 +64,11 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label className="label">Повне ім'я</label>
-            <input className="input" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Іван Іваненко" required />
+            <input className="input" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" required />
           </div>
           <div>
             <label className="label">Email</label>
-            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ivan@example.com" required />
+            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" required />
           </div>
           <div>
             <label className="label">Пароль</label>
