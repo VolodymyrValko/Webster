@@ -5,7 +5,7 @@ import { resolveUploadUrl, resolveCanvasJsonUrls } from '../utils/urls';
 import Toolbar from '../components/editor/Toolbar';
 import PropertiesPanel from '../components/editor/PropertiesPanel';
 import LayersPanel from '../components/editor/LayersPanel';
-import DrawingOptionsBar, { FillMode } from '../components/editor/DrawingOptionsBar';
+import { FillMode } from '../components/editor/DrawingOptionsBar';
 import TemplatesPanel, { Template } from '../components/editor/TemplatesPanel';
 import StickersPanel from '../components/editor/StickersPanel';
 import ShareModal from '../components/editor/ShareModal';
@@ -72,6 +72,7 @@ export default function EditorPage() {
   const logicalSizeRef    = useRef({ w: 800, h: 600 });
   const isDirtyRef        = useRef(false);
   const bgHistoryTimer    = useRef<ReturnType<typeof setTimeout>>();
+  const clipboardRef      = useRef<fabric.Object | null>(null);
 
   const [design,       setDesign]       = useState<Design | null>(null);
   const [title,        setTitle]        = useState('Untitled Design');
@@ -336,13 +337,37 @@ export default function EditorPage() {
     });
 
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable;
       const k = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && (k === 'z' || k === 'я')) { e.preventDefault(); undo(); }
       if ((e.ctrlKey || e.metaKey) && (k === 'y' || k === 'н')) { e.preventDefault(); redo(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveDesign(); }
-      if ((e.key === 'Delete' || e.key === 'Backspace')
-        && !(e.target instanceof HTMLInputElement)
-        && !(e.target instanceof HTMLTextAreaElement)) {
+      if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); saveDesign(); }
+      if ((e.ctrlKey || e.metaKey) && (k === 'c' || k === 'с') && !inInput) {
+        const active = canvas.getActiveObject();
+        if (active) active.clone((cloned: fabric.Object) => { clipboardRef.current = cloned; });
+      }
+      if ((e.ctrlKey || e.metaKey) && (k === 'v' || k === 'м') && !inInput) {
+        const clipped = clipboardRef.current;
+        if (!clipped) return;
+        clipped.clone((cloned: fabric.Object) => {
+          canvas.discardActiveObject();
+          cloned.set({ left: (cloned.left ?? 0) + 20, top: (cloned.top ?? 0) + 20, evented: true });
+          if ((cloned as any).type === 'activeSelection') {
+            (cloned as fabric.ActiveSelection).canvas = canvas;
+            (cloned as fabric.ActiveSelection).forEachObject((o: fabric.Object) => canvas.add(o));
+            cloned.setCoords();
+          } else {
+            canvas.add(cloned);
+          }
+          canvas.setActiveObject(cloned);
+          canvas.renderAll();
+          pushHistory('📋 Вставка');
+          refreshObjects();
+          clipboardRef.current = cloned;
+        });
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !inInput) {
         const active = canvas.getActiveObjects();
         if (active.length) { active.forEach(o => canvas.remove(o)); canvas.discardActiveObject(); canvas.renderAll(); }
       }
@@ -440,6 +465,37 @@ export default function EditorPage() {
     c.setBackgroundColor(color, () => { c.renderAll(); });
     clearTimeout(bgHistoryTimer.current);
     bgHistoryTimer.current = setTimeout(() => pushHistory('🎨 Фон'), 600);
+  };
+
+  const toolToFabricType = (tool: string): string[] => {
+    if (tool === 'draw-circle') return ['circle', 'ellipse'];
+    if (tool === 'pencil') return ['path'];
+    if (tool === 'draw-rect') return ['rect'];
+    if (tool === 'draw-rounded-rect') return ['rect'];
+    return ['rect', 'path', 'ellipse', 'circle'];
+  };
+
+  const inheritFromLastObject = (tool: string) => {
+    const c = fabricRef.current;
+    if (!c) return;
+    const types = toolToFabricType(tool);
+    const objs = c.getObjects().filter(o => types.includes(o.type || ''));
+    if (!objs.length) return;
+    const last = objs[objs.length - 1] as any;
+    if (last.fill && last.fill !== 'transparent') setFillColor(last.fill as string);
+    if (last.stroke && last.stroke !== 'transparent') setStrokeColor(last.stroke as string);
+    if (last.strokeWidth != null) setStrokeWidth(last.strokeWidth);
+    if (last.opacity != null) setOpacity(last.opacity);
+    const hasFill = last.fill && last.fill !== 'transparent';
+    const hasStroke = last.stroke && last.stroke !== 'transparent';
+    if (hasFill && hasStroke) setFillMode('both');
+    else if (hasStroke) setFillMode('outline');
+    else setFillMode('filled');
+  };
+
+  const selectTool = (tool: string) => {
+    if (SHAPE_TOOLS.includes(tool) || tool === 'pencil') inheritFromLastObject(tool);
+    setActiveTool(tool);
   };
 
   const addText = () => {
@@ -804,7 +860,7 @@ export default function EditorPage() {
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Toolbar
-          activeTool={activeTool} setActiveTool={setActiveTool}
+          activeTool={activeTool} setActiveTool={selectTool}
           onAddText={addText} onUploadImage={uploadImage}
           onDelete={deleteSelected} onUndo={undo} onRedo={redo}
           onBringForward={bringForward} onSendBackward={sendBackward}
@@ -843,16 +899,6 @@ export default function EditorPage() {
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <DrawingOptionsBar
-            activeTool={activeTool}
-            fillColor={fillColor}     setFillColor={setFillColor}
-            strokeColor={strokeColor} setStrokeColor={setStrokeColor}
-            strokeWidth={strokeWidth} setStrokeWidth={setStrokeWidth}
-            brushSize={brushSize}     setBrushSize={setBrushSize}
-            fillMode={fillMode}       setFillMode={setFillMode}
-            opacity={opacity}         setOpacity={setOpacity}
-          />
-
           <div
             ref={canvasWrapRef}
             style={{
