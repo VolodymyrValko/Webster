@@ -1,5 +1,17 @@
 import { fabric } from 'fabric';
 
+type FillMode = 'filled' | 'outline' | 'both';
+
+interface ToolProps {
+  activeTool: string;
+  fillColor: string;    setFillColor: (c: string) => void;
+  strokeColor: string;  setStrokeColor: (c: string) => void;
+  strokeWidth: number;  setStrokeWidth: (n: number) => void;
+  fillMode: FillMode;   setFillMode: (m: FillMode) => void;
+  opacity: number;      setOpacity: (n: number) => void;
+  brushSize: number;    setBrushSize: (n: number) => void;
+}
+
 interface PropertiesPanelProps {
   selectedObject: fabric.Object | null;
   canvas: fabric.Canvas | null;
@@ -9,6 +21,7 @@ interface PropertiesPanelProps {
   historySteps: string[];
   historyIndex: number;
   onJumpHistory: (i: number) => void;
+  toolProps: ToolProps;
 }
 
 const FONTS = ['Inter', 'Arial', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS', 'Trebuchet MS', 'Palatino'];
@@ -22,8 +35,11 @@ const FILTER_PRESETS = [
   { label: 'Рельєф', filters: [new fabric.Image.filters.Convolute({ matrix: [1, 1, 1, 1, 0.7, -1, -1, -1, -1] })] },
 ];
 
-export default function PropertiesPanel({ selectedObject, canvas, onUpdate, background, onBackgroundChange, historySteps, historyIndex, onJumpHistory }: PropertiesPanelProps) {
+const SHAPE_TOOLS = ['draw-rect','draw-circle','draw-rounded-rect','draw-diamond','draw-trapezoid','draw-right-triangle'];
+
+export default function PropertiesPanel({ selectedObject, canvas, onUpdate, background, onBackgroundChange, historySteps, historyIndex, onJumpHistory, toolProps }: PropertiesPanelProps) {
   const obj = selectedObject;
+  const tp = toolProps;
 
   const set = (prop: string, value: any) => {
     if (!obj || !canvas) return;
@@ -77,7 +93,61 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
       <input type="color" value={background} onChange={(e) => onBackgroundChange(e.target.value)}
         style={{ width: '100%', height: 36, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
 
-      {!obj && (
+      {!obj && SHAPE_TOOLS.includes(tp.activeTool) && (
+        <>
+          {sectionTitle('Новий об\'єкт')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <input type="checkbox" id="tl-fill" checked={tp.fillMode !== 'outline'}
+              onChange={e => { if (!e.target.checked && tp.fillMode === 'both') tp.setFillMode('outline'); else if (e.target.checked) tp.setFillMode(tp.fillMode === 'outline' ? (tp.strokeColor !== 'transparent' ? 'both' : 'filled') : tp.fillMode); }}
+              style={{ accentColor: 'var(--primary)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+            <label htmlFor="tl-fill" style={{ fontSize: 12, color: 'var(--text-muted)', width: 56, flexShrink: 0, cursor: 'pointer' }}>Заливка</label>
+            <input type="color" value={tp.fillColor} disabled={tp.fillMode === 'outline'}
+              onChange={e => tp.setFillColor(e.target.value)}
+              style={{ flex: 1, height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: tp.fillMode !== 'outline' ? 'pointer' : 'not-allowed', padding: 2, opacity: tp.fillMode !== 'outline' ? 1 : 0.4 }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <input type="checkbox" id="tl-stroke" checked={tp.fillMode !== 'filled'}
+              onChange={e => { if (!e.target.checked && tp.fillMode === 'filled') return; tp.setFillMode(e.target.checked ? (tp.fillMode === 'filled' ? 'both' : tp.fillMode) : 'filled'); }}
+              style={{ accentColor: 'var(--primary)', width: 14, height: 14, cursor: 'pointer', flexShrink: 0 }} />
+            <label htmlFor="tl-stroke" style={{ fontSize: 12, color: 'var(--text-muted)', width: 56, flexShrink: 0, cursor: 'pointer' }}>Контур</label>
+            <input type="color" value={tp.strokeColor} disabled={tp.fillMode === 'filled'}
+              onChange={e => tp.setStrokeColor(e.target.value)}
+              style={{ flex: 1, height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: tp.fillMode !== 'filled' ? 'pointer' : 'not-allowed', padding: 2, opacity: tp.fillMode !== 'filled' ? 1 : 0.4 }} />
+          </div>
+          {tp.fillMode !== 'filled' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>Товщина</label>
+              <input type="number" value={tp.strokeWidth} min={1} max={50}
+                onChange={e => tp.setStrokeWidth(Number(e.target.value))}
+                style={{ flex: 1, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg)' }} />
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>Прозорість</label>
+            <input type="range" min={0} max={1} step={0.01} value={tp.opacity}
+              onChange={e => tp.setOpacity(Number(e.target.value))}
+              style={{ flex: 1 }} />
+          </div>
+        </>
+      )}
+
+      {!obj && tp.activeTool === 'pencil' && (
+        <>
+          {sectionTitle('Олівець')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>Колір</label>
+            <input type="color" value={tp.fillColor} onChange={e => tp.setFillColor(e.target.value)}
+              style={{ flex: 1, height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>Розмір</label>
+            <input type="range" min={1} max={80} value={tp.brushSize} onChange={e => tp.setBrushSize(Number(e.target.value))} style={{ flex: 1 }} />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 24 }}>{tp.brushSize}</span>
+          </div>
+        </>
+      )}
+
+      {!obj && !SHAPE_TOOLS.includes(tp.activeTool) && tp.activeTool !== 'pencil' && (
         <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
           Оберіть об'єкт для редагування властивостей
         </p>

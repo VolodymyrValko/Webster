@@ -515,6 +515,29 @@ export default function EditorPage() {
     setActiveTool(tool);
   };
 
+  const createDefaultShape = (tool: string) => {
+    const c = fabricRef.current;
+    if (!c) return;
+    const cw = logicalSizeRef.current.w;
+    const ch = logicalSizeRef.current.h;
+    const size = Math.min(cw, ch) * 0.25;
+    const x1 = (cw - size) / 2, y1 = (ch - size) / 2;
+    const x2 = x1 + size,       y2 = y1 + size;
+    const shape = buildShape(
+      tool, x1, y1, x2, y2,
+      fillModeRef.current, fillColorRef.current,
+      strokeColorRef.current, strokeWidthRef.current, opacityRef.current,
+    );
+    if (!shape) return;
+    shape.set({ selectable: true, evented: true, _label: SHAPE_LABELS[tool] ?? '' } as any);
+    c.add(shape);
+    c.setActiveObject(shape);
+    c.renderAll();
+    pushHistory(`${SHAPE_LABELS[tool] ?? '▭'} Фігура`);
+    refreshObjects();
+    setActiveTool('select');
+  };
+
   const addText = () => {
     const c = fabricRef.current;
     if (!c) return;
@@ -877,7 +900,7 @@ export default function EditorPage() {
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Toolbar
-          activeTool={activeTool} setActiveTool={selectTool}
+          activeTool={activeTool} setActiveTool={selectTool} onQuickCreate={createDefaultShape}
           onAddText={addText} onUploadImage={uploadImage}
           onDelete={deleteSelected} onUndo={undo} onRedo={redo}
           onBringForward={bringForward} onSendBackward={sendBackward}
@@ -943,6 +966,15 @@ export default function EditorPage() {
           historySteps={historyState.labels}
           historyIndex={historyState.index}
           onJumpHistory={jumpHistory}
+          toolProps={{
+            activeTool,
+            fillColor,    setFillColor,
+            strokeColor,  setStrokeColor,
+            strokeWidth,  setStrokeWidth,
+            fillMode,     setFillMode,
+            opacity,      setOpacity,
+            brushSize,    setBrushSize,
+          }}
         />
       </div>
 
