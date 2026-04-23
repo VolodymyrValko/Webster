@@ -1,11 +1,8 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete,
-  UseGuards, Request, UseInterceptors, UploadedFile,
+  UseGuards, Request,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DesignsService } from './designs.service';
 import { CreateDesignDto } from './dto/create-design.dto';
@@ -61,28 +58,12 @@ export class DesignsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Patch(':id/thumbnail')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/thumbnails',
-        filename: (req, file, cb) => {
-          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, unique + extname(file.originalname));
-        },
-      }),
-    }),
-  )
   uploadThumbnail(
     @Param('id') id: string,
     @Request() req,
-    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { thumbnail: string },
   ) {
-    return this.designsService.updateThumbnail(
-      id,
-      req.user.id,
-      `/uploads/thumbnails/${file.filename}`,
-    );
+    return this.designsService.updateThumbnail(id, req.user.id, body.thumbnail);
   }
 
   @UseGuards(JwtAuthGuard)
