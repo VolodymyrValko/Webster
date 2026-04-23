@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { fabric } from 'fabric';
 import { resolveUploadUrl, resolveCanvasJsonUrls } from '../utils/urls';
 import Toolbar from '../components/editor/Toolbar';
@@ -57,6 +57,8 @@ const HISTORY_LIMIT = 200;
 export default function EditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const searchParamsRef = useRef(searchParams);
 
   const canvasRef        = useRef<HTMLCanvasElement>(null);
   const canvasWrapRef    = useRef<HTMLDivElement>(null);
@@ -334,7 +336,11 @@ export default function EditorPage() {
       }
     });
 
-    canvas.on('path:created', () => {
+    canvas.on('path:created', (e: any) => {
+      if (e.path && opacityRef.current < 1) {
+        e.path.set('opacity', opacityRef.current);
+        canvas.renderAll();
+      }
       pushHistory('✏️ Малюнок');
       refreshObjects();
     });
@@ -412,6 +418,13 @@ export default function EditorPage() {
             });
           } else {
             pushHistory('📂 Завантаження');
+            const sysId = searchParamsRef.current.get('sysTemplate');
+            if (sysId) {
+              import('../components/editor/TemplatesPanel').then(m => {
+                const tpl = m.TEMPLATES.find((t: any) => t.id === sysId);
+                if (tpl) applyTemplateNoConfirm(canvas, tpl);
+              });
+            }
           }
         } catch {
           suppressRef.current = false;
@@ -443,6 +456,7 @@ export default function EditorPage() {
       const brush = new fabric.PencilBrush(canvas);
       brush.color = fillColor;
       brush.width = Math.max(1, brushSize / 4);
+      (brush as any).opacity = opacity;
       canvas.freeDrawingBrush = brush;
       canvas.isDrawingMode = true;
       canvas.selection = false;
@@ -461,14 +475,15 @@ export default function EditorPage() {
       canvas.defaultCursor = 'default';
       canvas.getObjects().forEach(o => { if (!(o as any)._locked) { o.selectable = true; o.evented = true; } });
     }
-  }, [activeTool, fillColor, brushSize]);
+  }, [activeTool, fillColor, brushSize, opacity]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas?.isDrawingMode || !canvas.freeDrawingBrush) return;
     canvas.freeDrawingBrush.color = fillColor;
     canvas.freeDrawingBrush.width = Math.max(1, brushSize / 4);
-  }, [fillColor, brushSize, activeTool]);
+    (canvas.freeDrawingBrush as any).opacity = opacity;
+  }, [fillColor, brushSize, opacity, activeTool]);
 
   const handleBackgroundChange = (color: string) => {
     setBackground(color);
@@ -620,6 +635,37 @@ export default function EditorPage() {
   const sendToBack = () => {
     const a = fabricRef.current?.getActiveObject();
     if (a) { fabricRef.current?.sendToBack(a); fabricRef.current?.renderAll(); pushHistory('⏬ На низ'); refreshObjects(); }
+  };
+
+  const applyTemplateNoConfirm = (c: fabric.Canvas, tpl: any) => {
+    const label = tpl.label ?? tpl.name ?? 'Шаблон';
+    logicalSizeRef.current = { w: tpl.width, h: tpl.height };
+    setLogicalSize({ w: tpl.width, h: tpl.height });
+    const availW = window.innerWidth - 172 - 270 - 48;
+    const availH = window.innerHeight - 56 - 48;
+    const z = Math.max(0.1, Math.min(1, Math.min(availW / tpl.width, availH / tpl.height)));
+    zoomRef.current = z; setZoom(z);
+    c.setDimensions({ width: tpl.width * z, height: tpl.height * z });
+    c.setViewportTransform([z,0,0,z,0,0]);
+    const bg = tpl.background ?? '#ffffff';
+    setBackground(bg);
+    suppressRef.current = true;
+    c.clear();
+    c.setBackgroundColor(bg, () => {});
+    const specs: any[] = tpl.objects ?? [];
+    for (const spec of specs) {
+      const { type, text, ...props } = spec;
+      let obj: fabric.Object | null = null;
+      if (type === 'rect')         obj = new fabric.Rect(props);
+      else if (type === 'ellipse') obj = new fabric.Ellipse(props);
+      else if (type === 'textbox') obj = new fabric.Textbox(text ?? '', props);
+      else if (type === 'path')    obj = new fabric.Path(props.path ?? '', props);
+      if (obj) c.add(obj);
+    }
+    c.renderAll();
+    suppressRef.current = false;
+    pushHistory(`📋 ${label}`);
+    refreshObjects();
   };
 
   const applyTemplate = (tpl: Template | any) => {

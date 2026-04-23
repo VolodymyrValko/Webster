@@ -144,6 +144,11 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
             <input type="range" min={1} max={80} value={tp.brushSize} onChange={e => tp.setBrushSize(Number(e.target.value))} style={{ flex: 1 }} />
             <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 24 }}>{tp.brushSize}</span>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', width: 72, flexShrink: 0 }}>Прозорість</label>
+            <input type="range" min={0} max={1} step={0.01} value={tp.opacity} onChange={e => tp.setOpacity(Number(e.target.value))} style={{ flex: 1 }} />
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', minWidth: 28 }}>{Math.round(tp.opacity * 100)}%</span>
+          </div>
         </>
       )}
 

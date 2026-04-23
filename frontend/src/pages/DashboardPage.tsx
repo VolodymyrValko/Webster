@@ -232,8 +232,8 @@ export default function DashboardPage() {
                     onClick={() => {
                       api.post('/designs', {
                         title: t.label, width: t.width, height: t.height,
-                        canvasData: { version: '5.3.0', objects: t.objects, background: t.background },
-                      }).then(r => navigate(`/editor/${r.data.id}`));
+                        canvasData: {},
+                      }).then(r => navigate(`/editor/${r.data.id}?sysTemplate=${t.id}`));
                     }}>
                     <img src={t.thumb} alt={t.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </ThumbCard>
