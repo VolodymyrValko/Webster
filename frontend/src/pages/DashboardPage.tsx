@@ -18,7 +18,6 @@ export default function DashboardPage() {
 
   const [designs,      setDesigns]      = useState<Design[]>([]);
   const [shareDesignId, setShareDesignId] = useState<string | null>(null);
-  const [templates,    setTemplates]    = useState<Template[]>([]);
   const [myTemplates,  setMyTemplates]  = useState<Template[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [showNewModal, setShowNewModal] = useState(false);
@@ -33,10 +32,6 @@ export default function DashboardPage() {
   useEffect(() => {
     Promise.all([
       api.get('/designs').then(r => setDesigns(r.data)),
-      api.get('/templates').then(r => {
-        const all: Template[] = r.data;
-        setTemplates(all.filter(t => !t.userId));
-      }),
       api.get('/templates/mine').then(r => setMyTemplates(r.data)),
     ]).finally(() => setLoading(false));
   }, []);
@@ -160,7 +155,7 @@ export default function DashboardPage() {
 
         <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--surface)', borderRadius: 'var(--radius-sm)', padding: 4, border: '1px solid var(--border)', width: 'fit-content' }}>
           {tabBtn(`Мої дизайни (${designs.length})`, activeTab === 'designs', () => setActiveTab('designs'))}
-          {tabBtn(`Шаблони (${templates.length + myTemplates.length})`, activeTab === 'templates', () => setActiveTab('templates'))}
+          {tabBtn(`Шаблони (${TEMPLATES.length + myTemplates.length})`, activeTab === 'templates', () => setActiveTab('templates'))}
         </div>
 
         {loading ? (
@@ -219,27 +214,21 @@ export default function DashboardPage() {
         ) : (
           <>
             <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--surface)', borderRadius: 'var(--radius-sm)', padding: 4, border: '1px solid var(--border)', width: 'fit-content' }}>
-              {tabBtn(`Системні (${templates.length})`, tplTab === 'system', () => setTplTab('system'))}
+              {tabBtn(`Системні (${TEMPLATES.length})`, tplTab === 'system', () => setTplTab('system'))}
               {tabBtn(`Мої шаблони (${myTemplates.length})`, tplTab === 'mine', () => setTplTab('mine'))}
             </div>
 
             {tplTab === 'system' ? (
               <div className="grid-4">
-                {templates.map(t => (
-                  <ThumbCard key={t.id} title={t.name} sub={`${t.width}×${t.height} · ${t.category}`} onClick={() => createFromTemplate(t)}>
-                    <div style={{
-                      height: '100%',
-                      background: `linear-gradient(135deg, ${(t.canvasData as any).background || '#6c63ff'} 0%, #a855f7 100%)`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                {TEMPLATES.map(t => (
+                  <ThumbCard key={t.id} title={t.label} sub={`${t.width}×${t.height} · ${t.category}`}
+                    onClick={() => {
+                      api.post('/designs', {
+                        title: t.label, width: t.width, height: t.height,
+                        canvasData: { version: '5.3.0', objects: t.objects, background: t.background },
+                      }).then(r => navigate(`/editor/${r.data.id}`));
                     }}>
-                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                        <rect x="4" y="4" width="32" height="32" rx="6" fill="rgba(255,255,255,0.2)"/>
-                        <rect x="10" y="10" width="20" height="3" rx="1.5" fill="#fff" opacity=".8"/>
-                        <rect x="10" y="17" width="14" height="2" rx="1" fill="#fff" opacity=".5"/>
-                        <rect x="10" y="23" width="18" height="2" rx="1" fill="#fff" opacity=".5"/>
-                        <rect x="10" y="29" width="10" height="2" rx="1" fill="#fff" opacity=".4"/>
-                      </svg>
-                    </div>
+                    <img src={t.thumb} alt={t.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </ThumbCard>
                 ))}
               </div>
