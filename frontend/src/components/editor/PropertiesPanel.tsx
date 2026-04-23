@@ -13,13 +13,13 @@ interface PropertiesPanelProps {
 
 const FONTS = ['Inter', 'Arial', 'Georgia', 'Times New Roman', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS', 'Trebuchet MS', 'Palatino'];
 const FILTER_PRESETS = [
-  { label: 'None', filters: [] },
-  { label: 'Grayscale', filters: [new fabric.Image.filters.Grayscale()] },
-  { label: 'Sepia', filters: [new fabric.Image.filters.Sepia()] },
-  { label: 'Invert', filters: [new fabric.Image.filters.Invert()] },
-  { label: 'Blur', filters: [new fabric.Image.filters.Blur({ blur: 0.2 })] },
-  { label: 'Sharpen', filters: [new fabric.Image.filters.Convolute({ matrix: [0, -1, 0, -1, 5, -1, 0, -1, 0] })] },
-  { label: 'Emboss', filters: [new fabric.Image.filters.Convolute({ matrix: [1, 1, 1, 1, 0.7, -1, -1, -1, -1] })] },
+  { label: 'Без фільтру', filters: [] },
+  { label: 'Сірий', filters: [new fabric.Image.filters.Grayscale()] },
+  { label: 'Сепія', filters: [new fabric.Image.filters.Sepia()] },
+  { label: 'Інверсія', filters: [new fabric.Image.filters.Invert()] },
+  { label: 'Розмиття', filters: [new fabric.Image.filters.Blur({ blur: 0.2 })] },
+  { label: 'Різкість', filters: [new fabric.Image.filters.Convolute({ matrix: [0, -1, 0, -1, 5, -1, 0, -1, 0] })] },
+  { label: 'Рельєф', filters: [new fabric.Image.filters.Convolute({ matrix: [1, 1, 1, 1, 0.7, -1, -1, -1, -1] })] },
 ];
 
 export default function PropertiesPanel({ selectedObject, canvas, onUpdate, background, onBackgroundChange, historySteps, historyIndex, onJumpHistory }: PropertiesPanelProps) {
@@ -71,26 +71,26 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
 
   return (
     <div style={{ width: 240, background: 'var(--surface)', borderLeft: '1px solid var(--border)', padding: '16px', overflowY: 'auto', flexShrink: 0 }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Properties</h3>
+      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Властивості</h3>
 
-      {sectionTitle('Canvas Background')}
+      {sectionTitle('Фон полотна')}
       <input type="color" value={background} onChange={(e) => onBackgroundChange(e.target.value)}
         style={{ width: '100%', height: 36, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
 
       {!obj && (
         <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 24, textAlign: 'center' }}>
-          Select an object to edit its properties
+          Оберіть об'єкт для редагування властивостей
         </p>
       )}
 
       {obj && (
         <>
-          {sectionTitle('Transform')}
+          {sectionTitle('Трансформація')}
           {row('X', numInput('left', (obj as any).left))}
           {row('Y', numInput('top', (obj as any).top))}
-          {row('Width', numInput('scaleX', undefined, 0.01, 20, 0.01))}
-          {row('Angle', numInput('angle', (obj as any).angle, 0, 360))}
-          {row('Opacity', (
+          {row('Ширина', numInput('scaleX', undefined, 0.01, 20, 0.01))}
+          {row('Кут', numInput('angle', (obj as any).angle, 0, 360))}
+          {row('Прозорість', (
             <input type="range" min={0} max={1} step={0.01} value={(obj as any).opacity ?? 1}
               onChange={(e) => set('opacity', parseFloat(e.target.value))}
               style={{ width: '100%' }} />
@@ -98,33 +98,33 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
 
           {obj.type !== 'image' && (
             <>
-              {sectionTitle('Fill & Stroke')}
-              {row('Fill', (
+              {sectionTitle('Заливка і контур')}
+              {row('Заливка', (
                 <input type="color" value={(obj as any).fill || '#000000'}
                   onChange={(e) => set('fill', e.target.value)}
                   style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
               ))}
-              {row('Stroke', (
+              {row('Контур', (
                 <input type="color" value={(obj as any).stroke || '#000000'}
                   onChange={(e) => set('stroke', e.target.value)}
                   style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
               ))}
-              {row('Stroke W', numInput('strokeWidth', (obj as any).strokeWidth, 0, 50))}
+              {row('Товщина', numInput('strokeWidth', (obj as any).strokeWidth, 0, 50))}
             </>
           )}
 
           {(obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && (
             <>
-              {sectionTitle('Typography')}
-              {row('Font', (
+              {sectionTitle('Типографіка')}
+              {row('Шрифт', (
                 <select value={(obj as any).fontFamily || 'Inter'}
                   onChange={(e) => set('fontFamily', e.target.value)}
                   style={{ width: '100%', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg)' }}>
                   {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
               ))}
-              {row('Size', numInput('fontSize', (obj as any).fontSize, 6, 300))}
-              {row('Color', (
+              {row('Розмір', numInput('fontSize', (obj as any).fontSize, 6, 300))}
+              {row('Колір', (
                 <input type="color" value={(obj as any).fill || '#000000'}
                   onChange={(e) => set('fill', e.target.value)}
                   style={{ width: '100%', height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
@@ -143,11 +143,11 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
                     fontWeight: style === 'bold' ? 700 : 400,
                     fontStyle: style === 'italic' ? 'italic' : 'normal',
                   }}>
-                    {style.charAt(0).toUpperCase()}
+                    {style === 'bold' ? 'Ж' : style === 'italic' ? 'К' : 'П'}
                   </button>
                 ))}
               </div>
-              {row('Align', (
+              {row('Вирівнювання', (
                 <div style={{ display: 'flex', gap: 4 }}>
                   {['left', 'center', 'right'].map((a) => (
                     <button key={a} onClick={() => set('textAlign', a)} style={{
@@ -166,11 +166,11 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
 
           {obj.type === 'image' && (
             <>
-              {sectionTitle('Brightness')}
+              {sectionTitle('Яскравість')}
               <input type="range" min={-1} max={1} step={0.05} defaultValue={0}
                 onChange={(e) => setBrightness(parseFloat(e.target.value))}
                 style={{ width: '100%' }} />
-              {sectionTitle('Filters')}
+              {sectionTitle('Фільтри')}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 {FILTER_PRESETS.map((fp) => (
                   <button key={fp.label} onClick={() => applyFilter(fp.filters)} style={{
