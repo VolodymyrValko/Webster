@@ -11,22 +11,36 @@ interface LayersPanelProps {
 function getObjectLabel(obj: fabric.Object): string {
   if (obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') {
     const text = (obj as fabric.Textbox).text || '';
-    return text.length > 20 ? text.slice(0, 20) + '…' : text || 'Text';
+    return text.length > 20 ? text.slice(0, 20) + '…' : text || 'Текст';
   }
-  if (obj.type === 'image') return 'Image';
-  if (obj.type === 'rect') return 'Rectangle';
-  if (obj.type === 'circle') return 'Circle';
-  if (obj.type === 'triangle') return 'Triangle';
-  if (obj.type === 'path') return 'Path';
-  return obj.type || 'Object';
+  if (obj.type === 'image') return 'Зображення';
+  if (obj.type === 'rect') return 'Прямокутник';
+  if (obj.type === 'circle') return 'Коло';
+  if (obj.type === 'ellipse') return 'Еліпс';
+  if (obj.type === 'triangle') return 'Трикутник';
+  if (obj.type === 'path') {
+    const lbl: string = (obj as any)._label || '';
+    if (lbl) return lbl.replace(/^[^\s]+\s/, ''); // strip emoji prefix
+    return 'Контур';
+  }
+  return obj.type || 'Об\'єкт';
 }
 
-function getObjectIcon(type: string | undefined): string {
+function getObjectIcon(obj: fabric.Object): string {
+  const type = obj.type;
   if (type === 'textbox' || type === 'i-text' || type === 'text') return 'T';
   if (type === 'image') return '🖼';
   if (type === 'rect') return '▭';
-  if (type === 'circle') return '○';
+  if (type === 'circle' || type === 'ellipse') return '○';
   if (type === 'triangle') return '△';
+  if (type === 'path') {
+    const lbl: string = (obj as any)._label || '';
+    if (lbl.startsWith('◇')) return '◇';
+    if (lbl.startsWith('⏢')) return '⏢';
+    if (lbl.startsWith('◺')) return '◺';
+    if (lbl.startsWith('▢')) return '▢';
+    return '✏';
+  }
   return '◈';
 }
 
@@ -55,12 +69,12 @@ export default function LayersPanel({ canvas, objects, selectedObject, onSelect,
   return (
     <div style={{ width: 200, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
       <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 600 }}>
-        Layers ({objects.length})
+        Шари ({objects.length})
       </div>
       <div style={{ overflowY: 'auto', flex: 1 }}>
         {reversed.length === 0 && (
           <div style={{ padding: 16, color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>
-            No layers yet.<br />Add shapes or text.
+            Немає шарів.<br />Додайте фігури або текст.
           </div>
         )}
         {reversed.map((obj, i) => {
@@ -76,14 +90,14 @@ export default function LayersPanel({ canvas, objects, selectedObject, onSelect,
               opacity: isHidden ? 0.4 : 1,
               transition: 'background 0.15s',
             }}>
-              <span style={{ fontSize: 14, flexShrink: 0, color: isSelected ? 'var(--primary)' : 'var(--text-muted)' }}>{getObjectIcon(obj.type)}</span>
+              <span style={{ fontSize: 14, flexShrink: 0, color: isSelected ? 'var(--primary)' : 'var(--text-muted)' }}>{getObjectIcon(obj)}</span>
               <span style={{ flex: 1, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: isSelected ? 'var(--primary)' : 'var(--text)' }}>
                 {getObjectLabel(obj)}
               </span>
-              <button onClick={(e) => toggleVisibility(obj, e)} title={isHidden ? 'Show' : 'Hide'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, opacity: 0.6, padding: 2 }}>
+              <button onClick={(e) => toggleVisibility(obj, e)} title={isHidden ? 'Показати' : 'Сховати'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, opacity: 0.6, padding: 2 }}>
                 {isHidden ? '🙈' : '👁'}
               </button>
-              <button onClick={(e) => toggleLock(obj, e)} title={isLocked ? 'Unlock' : 'Lock'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, opacity: 0.6, padding: 2 }}>
+              <button onClick={(e) => toggleLock(obj, e)} title={isLocked ? 'Розблокувати' : 'Заблокувати'} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, opacity: 0.6, padding: 2 }}>
                 {isLocked ? '🔒' : '🔓'}
               </button>
             </div>

@@ -318,7 +318,7 @@ export default function EditorPage() {
         strokeColorRef.current, strokeWidthRef.current, opacityRef.current,
       );
       if (shape) {
-        shape.set({ selectable: true, evented: true });
+        shape.set({ selectable: true, evented: true, _label: SHAPE_LABELS[activeToolRef.current] ?? '' } as any);
         canvas.add(shape);
         canvas.getObjects().forEach(o => { if (!(o as any)._locked) { o.selectable = true; o.evented = true; } });
         canvas.selection = true;
@@ -592,9 +592,9 @@ export default function EditorPage() {
       fetch(url).then(r => r.blob()).then(res).catch(rej);
     });
 
-  const saveDesign = async () => {
+  const saveDesign = async (): Promise<string | null> => {
     const c = fabricRef.current;
-    if (!c) return;
+    if (!c) return null;
     setSaving(true);
     const canvasData = c.toJSON();
     try {
@@ -616,16 +616,18 @@ export default function EditorPage() {
       isDirtyRef.current = false;
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+      return savedId;
     } finally {
       setSaving(false);
     }
+    return null;
   };
 
   const togglePublic = async (pub: boolean) => {
-    if (!design) {
-      await saveDesign();
+    let targetId = design?.id;
+    if (!targetId) {
+      targetId = (await saveDesign()) ?? undefined;
     }
-    const targetId = design?.id;
     if (!targetId) return;
     await api.patch(`/designs/${targetId}`, { isPublic: pub });
     setIsPublic(pub);
