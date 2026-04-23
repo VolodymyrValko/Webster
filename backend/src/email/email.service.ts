@@ -83,11 +83,11 @@ export class EmailService {
 <body>
   <div class="wrap">
     <div class="header">
-      <div class="logo">🎨 Webster</div>
+      <div class="logo">Vizora</div>
     </div>
     <div class="body">
       <h2>Привіт, ${name}!</h2>
-      <p>Дякуємо за реєстрацію в Webster. Щоб активувати акаунт і почати створювати дизайни — підтвердіть свою електронну пошту.</p>
+      <p>Дякуємо за реєстрацію в Vizora. Щоб активувати акаунт і почати створювати дизайни — підтвердіть свою електронну пошту.</p>
       <p style="text-align:center">
         <a href="${link}" class="btn">Підтвердити пошту</a>
       </p>
@@ -95,12 +95,12 @@ export class EmailService {
       <p><a href="${link}" class="link">${link}</a></p>
       <p style="font-size:13px;color:#bbb">Посилання дійсне 24 години. Якщо ви не реєструвалися — проігноруйте цей лист.</p>
     </div>
-    <div class="footer">© ${new Date().getFullYear()} Webster · Online Graphic Editor</div>
+    <div class="footer">© ${new Date().getFullYear()} Vizora · Online Graphic Editor</div>
   </div>
 </body>
 </html>`;
 
-    await this.send(to, 'Підтвердіть реєстрацію у Webster', html);
+    await this.send(to, 'Підтвердіть реєстрацію у Vizora', html);
   }
 
   async sendPasswordChangedEmail(to: string, name: string): Promise<void> {
@@ -125,18 +125,18 @@ export class EmailService {
 <body>
   <div class="wrap">
     <div class="header">
-      <div class="logo">🎨 Webster</div>
+      <div class="logo">Vizora</div>
     </div>
     <div class="body">
       <h2>Привіт, ${name}!</h2>
-      <p>Ваш акаунт Webster успішно підтверджено. Ласкаво просимо! 🎉</p>
+      <p>Ваш акаунт Vizora успішно підтверджено. Ласкаво просимо!</p>
       <p>Тепер ви можете входити та створювати дизайни.</p>
     </div>
-    <div class="footer">© ${new Date().getFullYear()} Webster · Online Graphic Editor</div>
+    <div class="footer">© ${new Date().getFullYear()} Vizora · Online Graphic Editor</div>
   </div>
 </body>
 </html>`;
 
-    await this.send(to, 'Акаунт Webster підтверджено', html);
+    await this.send(to, 'Акаунт Vizora підтверджено', html);
   }
 }
