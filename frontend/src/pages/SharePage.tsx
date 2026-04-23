@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fabric } from 'fabric';
-import axios from 'axios';
 import { Design } from '../types';
+import api from '../api/client';
+import { resolveCanvasJsonUrls } from '../utils/urls';
 
 const SOCIAL_SHARE = [
   { label: 'Facebook',  color: '#1877f2', href: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}` },
@@ -25,7 +26,7 @@ export default function SharePage() {
   const shareUrl = window.location.href;
 
   useEffect(() => {
-    axios.get(`/api/designs/share/${id}`)
+    api.get(`/designs/share/${id}`)
       .then(({ data }) => setDesign(data))
       .catch(() => setError('Дизайн не знайдено або він не є публічним'))
       .finally(() => setLoading(false));
@@ -54,7 +55,7 @@ export default function SharePage() {
     fabricRef.current = canvas;
     canvas.setZoom(scale);
 
-    canvas.loadFromJSON(canvasData, () => {
+    canvas.loadFromJSON(resolveCanvasJsonUrls(canvasData), () => {
       canvas.getObjects().forEach(o => { o.selectable = false; o.evented = false; o.hoverCursor = 'default'; });
       canvas.renderAll();
     });
