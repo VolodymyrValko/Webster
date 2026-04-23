@@ -524,10 +524,12 @@ export default function EditorPage() {
     if (!window.confirm(`Застосувати шаблон "${label}"?\nПоточний вміст буде замінено.`)) return;
     logicalSizeRef.current = { w: tpl.width, h: tpl.height };
     setLogicalSize({ w: tpl.width, h: tpl.height });
-    const z = 1;
+    const availW = window.innerWidth - 200 - 240 - 48;
+    const availH = window.innerHeight - 56 - 48;
+    const z = Math.max(0.1, Math.min(1, Math.min(availW / tpl.width, availH / tpl.height)));
     zoomRef.current = z; setZoom(z);
-    c.setDimensions({ width: tpl.width, height: tpl.height });
-    c.setViewportTransform([1,0,0,1,0,0]);
+    c.setDimensions({ width: tpl.width * z, height: tpl.height * z });
+    c.setViewportTransform([z,0,0,z,0,0]);
     const bg = tpl.background ?? tpl.canvasData?.background ?? '#ffffff';
     setBackground(bg);
     suppressRef.current = true;
@@ -544,6 +546,9 @@ export default function EditorPage() {
       }, 5000);
       c.loadFromJSON(jsonData, () => {
         clearTimeout(safety);
+        const zz = zoomRef.current;
+        c.setDimensions({ width: tpl.width * zz, height: tpl.height * zz });
+        c.setViewportTransform([zz,0,0,zz,0,0]);
         c.renderAll();
         suppressRef.current = false;
         pushHistory(`📋 ${label}`);
