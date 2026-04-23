@@ -96,7 +96,19 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
               style={{ width: '100%' }} />
           ))}
 
-          {obj.type !== 'image' && !(obj as any)._isSticker && (
+          {obj.type === 'path' && !(obj as any)._label && (
+            <>
+              {sectionTitle('Олівець')}
+              {row('Колір', (
+                <input type="color" value={(obj as any).stroke || '#000000'}
+                  onChange={(e) => set('stroke', e.target.value)}
+                  style={{ width: '100%', height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
+              ))}
+              {row('Розмір', numInput('strokeWidth', (obj as any).strokeWidth, 1, 200))}
+            </>
+          )}
+
+          {obj.type !== 'image' && !(obj as any)._isSticker && !(obj.type === 'path' && !(obj as any)._label) && (
             <>
               {sectionTitle('Заливка і контур')}
               {(() => {
