@@ -3,6 +3,7 @@ import { useState } from 'react';
 interface ToolbarProps {
   activeTool: string;
   setActiveTool: (t: string) => void;
+  onQuickCreate: (tool: string) => void;
   onUploadImage: () => void;
   onAddText: () => void;
   onDelete: () => void;
@@ -105,7 +106,7 @@ const Ic = {
 };
 
 export default function Toolbar({
-  activeTool, setActiveTool,
+  activeTool, setActiveTool, onQuickCreate,
   onUploadImage, onAddText,
   onDelete, onUndo, onRedo,
   onBringForward, onSendBackward,
@@ -215,7 +216,10 @@ export default function Toolbar({
         </button>
         {shapesOpen && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '0 4px' }}>
-            {SHAPES.map(s => btn({ id: s.id, label: s.label, icon: <span style={{ fontSize: 13 }}>{s.icon}</span> }))}
+            {SHAPES.map(s => btn({
+              id: s.id, label: s.label, icon: <span style={{ fontSize: 13 }}>{s.icon}</span>,
+              action: activeTool === s.id ? () => onQuickCreate(s.id) : undefined,
+            }))}
           </div>
         )}
       </div>
