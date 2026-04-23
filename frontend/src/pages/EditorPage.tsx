@@ -73,6 +73,7 @@ export default function EditorPage() {
   const isDirtyRef        = useRef(false);
   const bgHistoryTimer    = useRef<ReturnType<typeof setTimeout>>();
   const clipboardRef      = useRef<fabric.Object | null>(null);
+  const lastPropsByType   = useRef<Record<string, { fill: string; stroke: string; strokeWidth: number; opacity: number }>>({});
 
   const [design,       setDesign]       = useState<Design | null>(null);
   const [title,        setTitle]        = useState('Untitled Design');
@@ -249,6 +250,8 @@ export default function EditorPage() {
 
     canvas.on('object:modified', () => {
       modifiedRef.current = true;
+      const active = canvas.getActiveObject();
+      if (active) saveObjProps(active);
       refreshObjects();
     });
 
@@ -467,27 +470,41 @@ export default function EditorPage() {
     bgHistoryTimer.current = setTimeout(() => pushHistory('🎨 Фон'), 600);
   };
 
-  const toolToFabricType = (tool: string): string[] => {
-    if (tool === 'draw-circle') return ['circle', 'ellipse'];
-    if (tool === 'pencil') return ['path'];
-    if (tool === 'draw-rect') return ['rect'];
-    if (tool === 'draw-rounded-rect') return ['rect'];
-    return ['rect', 'path', 'ellipse', 'circle'];
+  const fabricTypeToKey = (type: string): string => {
+    if (type === 'ellipse' || type === 'circle') return 'ellipse';
+    if (type === 'rect') return 'rect';
+    if (type === 'path') return 'path';
+    if (type === 'textbox' || type === 'i-text' || type === 'text') return 'text';
+    return type;
+  };
+
+  const toolToTypeKey = (tool: string): string => {
+    if (tool === 'draw-circle') return 'ellipse';
+    if (tool === 'pencil') return 'path';
+    return 'rect'; // draw-rect, draw-rounded-rect, draw-diamond, draw-trapezoid, draw-right-triangle
+  };
+
+  const saveObjProps = (obj: fabric.Object) => {
+    const key = fabricTypeToKey(obj.type || '');
+    const o = obj as any;
+    lastPropsByType.current[key] = {
+      fill:        o.fill        ?? '#6c63ff',
+      stroke:      o.stroke      ?? 'transparent',
+      strokeWidth: o.strokeWidth ?? 2,
+      opacity:     o.opacity     ?? 1,
+    };
   };
 
   const inheritFromLastObject = (tool: string) => {
-    const c = fabricRef.current;
-    if (!c) return;
-    const types = toolToFabricType(tool);
-    const objs = c.getObjects().filter(o => types.includes(o.type || ''));
-    if (!objs.length) return;
-    const last = objs[objs.length - 1] as any;
-    if (last.fill && last.fill !== 'transparent') setFillColor(last.fill as string);
-    if (last.stroke && last.stroke !== 'transparent') setStrokeColor(last.stroke as string);
-    if (last.strokeWidth != null) setStrokeWidth(last.strokeWidth);
-    if (last.opacity != null) setOpacity(last.opacity);
-    const hasFill = last.fill && last.fill !== 'transparent';
-    const hasStroke = last.stroke && last.stroke !== 'transparent';
+    const key = toolToTypeKey(tool);
+    const saved = lastPropsByType.current[key];
+    if (!saved) return;
+    if (saved.fill && saved.fill !== 'transparent') setFillColor(saved.fill);
+    if (saved.stroke && saved.stroke !== 'transparent') setStrokeColor(saved.stroke);
+    setStrokeWidth(saved.strokeWidth);
+    setOpacity(saved.opacity);
+    const hasFill = saved.fill && saved.fill !== 'transparent';
+    const hasStroke = saved.stroke && saved.stroke !== 'transparent';
     if (hasFill && hasStroke) setFillMode('both');
     else if (hasStroke) setFillMode('outline');
     else setFillMode('filled');
@@ -916,7 +933,11 @@ export default function EditorPage() {
         <PropertiesPanel
           selectedObject={selectedObject}
           canvas={fabricRef.current}
-          onUpdate={refreshObjects}
+          onUpdate={() => {
+            const active = fabricRef.current?.getActiveObject();
+            if (active) saveObjProps(active);
+            refreshObjects();
+          }}
           background={background}
           onBackgroundChange={handleBackgroundChange}
           historySteps={historyState.labels}
