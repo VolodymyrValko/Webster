@@ -175,6 +175,11 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
                   style={{ width: '100%', height: 30, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }} />
               ))}
               {row('Розмір', numInput('strokeWidth', (obj as any).strokeWidth, 1, 200))}
+              {row('Прозорість', (
+                <input type="range" min={0} max={1} step={0.01} value={(obj as any).opacity ?? 1}
+                  onChange={(e) => set('opacity', parseFloat(e.target.value))}
+                  style={{ width: '100%' }} />
+              ))}
             </>
           )}
 
