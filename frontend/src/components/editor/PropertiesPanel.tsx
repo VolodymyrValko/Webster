@@ -70,7 +70,7 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
   );
 
   return (
-    <div style={{ width: 240, background: 'var(--surface)', borderLeft: '1px solid var(--border)', padding: '16px', overflowY: 'auto', flexShrink: 0 }}>
+    <div style={{ width: 270, background: 'var(--surface)', borderLeft: '1px solid var(--border)', padding: '16px', overflowY: 'auto', flexShrink: 0 }}>
       <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Властивості</h3>
 
       {sectionTitle('Фон полотна')}
@@ -96,7 +96,7 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
               style={{ width: '100%' }} />
           ))}
 
-          {obj.type !== 'image' && (
+          {obj.type !== 'image' && !(obj as any)._isSticker && (
             <>
               {sectionTitle('Заливка і контур')}
               {row('Заливка', (
@@ -113,7 +113,7 @@ export default function PropertiesPanel({ selectedObject, canvas, onUpdate, back
             </>
           )}
 
-          {(obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && (
+          {(obj.type === 'textbox' || obj.type === 'i-text' || obj.type === 'text') && !(obj as any)._isSticker && (
             <>
               {sectionTitle('Типографіка')}
               {row('Шрифт', (

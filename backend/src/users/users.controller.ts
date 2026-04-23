@@ -1,11 +1,8 @@
 import {
-  Controller, Get, UseGuards, Request, UseInterceptors,
-  UploadedFile, Patch, Body, Delete,
+  Controller, Get, UseGuards, Request,
+  Patch, Body, Delete,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -28,20 +25,8 @@ export class UsersController {
   }
 
   @Patch('avatar')
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (req, file, cb) => {
-          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, unique + extname(file.originalname));
-        },
-      }),
-    }),
-  )
-  async uploadAvatar(@Request() req, @UploadedFile() file: Express.Multer.File) {
-    return this.usersService.updateAvatar(req.user.id, `/uploads/avatars/${file.filename}`);
+  async uploadAvatar(@Request() req, @Body() body: { avatar: string }) {
+    return this.usersService.updateAvatar(req.user.id, body.avatar);
   }
 
   @Delete('avatar')

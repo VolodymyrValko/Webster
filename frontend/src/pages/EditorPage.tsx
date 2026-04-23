@@ -524,7 +524,7 @@ export default function EditorPage() {
     if (!window.confirm(`Застосувати шаблон "${label}"?\nПоточний вміст буде замінено.`)) return;
     logicalSizeRef.current = { w: tpl.width, h: tpl.height };
     setLogicalSize({ w: tpl.width, h: tpl.height });
-    const availW = window.innerWidth - 200 - 240 - 48;
+    const availW = window.innerWidth - 172 - 270 - 48;
     const availH = window.innerHeight - 56 - 48;
     const z = Math.max(0.1, Math.min(1, Math.min(availW / tpl.width, availH / tpl.height)));
     zoomRef.current = z; setZoom(z);
@@ -648,7 +648,8 @@ export default function EditorPage() {
     const text = new fabric.Text(emoji, {
       left: 120, top: 120, fontSize: 64,
       selectable: true, evented: true,
-    });
+      _isSticker: true,
+    } as any);
     c.add(text);
     c.setActiveObject(text);
     c.renderAll();
@@ -738,8 +739,8 @@ export default function EditorPage() {
         doc.open();
         doc.write(`<!DOCTYPE html><html><head><style>
           @page{size:${w}px ${h}px;margin:0}
-          body{margin:0;padding:0}
-          img{width:100%;height:auto;display:block}
+          body{margin:0;padding:0;width:${w}px;height:${h}px;overflow:hidden}
+          img{width:${w}px;height:${h}px;display:block;object-fit:contain}
         </style></head><body><img src="${url}"/></body></html>`);
         doc.close();
         printFrame.contentWindow!.focus();
