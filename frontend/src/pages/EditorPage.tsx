@@ -531,16 +531,53 @@ export default function EditorPage() {
     const bg = tpl.background ?? tpl.canvasData?.background ?? '#ffffff';
     setBackground(bg);
     suppressRef.current = true;
-    const rawJson = tpl.canvasData
-      ? tpl.canvasData
-      : { version: '5.3.0', objects: tpl.objects, background: tpl.background };
-    const jsonData = resolveCanvasJsonUrls(rawJson);
-    c.loadFromJSON(jsonData, () => {
-      c.renderAll();
-      suppressRef.current = false;
-      pushHistory(`📋 ${label}`);
-      refreshObjects();
-    });
+    c.clear();
+    c.setBackgroundColor(bg, () => {});
+
+    const objects: fabric.Object[] = (tpl.objects ?? tpl.canvasData?.objects ?? []);
+    const enlivenAndAdd = () => {
+      if (!objects.length) {
+        c.renderAll();
+        suppressRef.current = false;
+        pushHistory(`📋 ${label}`);
+        refreshObjects();
+        return;
+      }
+      // Safety timeout: if enlivening hangs, release suppress after 4s
+      const safety = setTimeout(() => {
+        suppressRef.current = false;
+        c.renderAll();
+        refreshObjects();
+      }, 4000);
+
+      fabric.util.enlivenObjects(objects, (enlivened: fabric.Object[]) => {
+        clearTimeout(safety);
+        enlivened.forEach(obj => c.add(obj));
+        c.renderAll();
+        suppressRef.current = false;
+        pushHistory(`📋 ${label}`);
+        refreshObjects();
+      }, 'fabric');
+    };
+
+    if (tpl.canvasData && !tpl.objects) {
+      // user template — use loadFromJSON for proper restoration
+      const jsonData = resolveCanvasJsonUrls(tpl.canvasData);
+      const safety = setTimeout(() => {
+        suppressRef.current = false;
+        c.renderAll();
+        refreshObjects();
+      }, 4000);
+      c.loadFromJSON(jsonData, () => {
+        clearTimeout(safety);
+        c.renderAll();
+        suppressRef.current = false;
+        pushHistory(`📋 ${label}`);
+        refreshObjects();
+      });
+    } else {
+      enlivenAndAdd();
+    }
     setShowTemplates(false);
   };
 
