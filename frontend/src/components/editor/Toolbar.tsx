@@ -23,7 +23,7 @@ interface ToolDef { id: string; label: string; icon: React.ReactNode; action?: (
 const SHAPES = [
   { id: 'draw-rect',           label: 'Прямокутник',      icon: '▭' },
   { id: 'draw-circle',         label: 'Коло / еліпс',     icon: '○' },
-  { id: 'draw-rounded-rect',   label: 'Закруглений рект', icon: '▢' },
+  { id: 'draw-rounded-rect',   label: 'Заокруглений прямокутник', icon: '▢' },
   { id: 'draw-diamond',        label: 'Ромб',             icon: '◇' },
   { id: 'draw-trapezoid',      label: 'Трапеція',         icon: '⏢' },
   { id: 'draw-right-triangle', label: 'Прям. трикутник',  icon: '◺' },
@@ -31,7 +31,7 @@ const SHAPES = [
 
 const BG     = '#1a1a2e';
 const BORDER = '#2d2d45';
-const W      = 130;
+const W      = 152;
 const BTN_W  = W - 12;
 
 const Ic = {
@@ -140,7 +140,7 @@ export default function Toolbar({
         onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
       >
         <span style={{ minWidth: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{tool.icon}</span>
-        <span style={{ fontSize: 10.5, whiteSpace: 'nowrap' }}>{tool.label}</span>
+        <span style={{ fontSize: 10.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tool.label}</span>
       </button>
     );
   };

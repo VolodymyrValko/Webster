@@ -20,7 +20,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setUnverifiedEmail('');
     try {
       await login(email, password);
       navigate('/dashboard');
@@ -29,6 +28,7 @@ export default function LoginPage() {
       if (data?.code === 'EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(data.email || email);
       } else {
+        setUnverifiedEmail('');
         setError(data?.message || 'Невірний email або пароль');
       }
     }
@@ -59,7 +59,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label className="label">Email</label>
-            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="john@example.com" required />
+            <input className="input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setUnverifiedEmail(''); setError(''); }} placeholder="john@example.com" required />
           </div>
           <div>
             <label className="label">Пароль</label>

@@ -81,10 +81,14 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const form = new FormData();
-    form.append('file', file);
     try {
-      const { data } = await api.patch('/users/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data } = await api.patch('/users/avatar', { avatar: dataUrl });
       updateUser(data);
       flash(setSuccessMsg, 'Аватар оновлено');
     } catch {

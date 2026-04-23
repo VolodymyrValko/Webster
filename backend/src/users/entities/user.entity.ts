@@ -27,7 +27,7 @@ export class User {
   @Column({ nullable: true, unique: true })
   googleId: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   avatar: string;
 
   @Column({ default: false })
