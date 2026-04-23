@@ -14,18 +14,15 @@ interface AuthState {
   updateUser: (user: User) => void;
 }
 
+const _token = localStorage.getItem('token');
+const _userStr = localStorage.getItem('user');
+
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
+  user: _token && _userStr ? JSON.parse(_userStr) : null,
+  token: _token,
   loading: false,
 
-  init() {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-    if (token && userStr) {
-      set({ token, user: JSON.parse(userStr) });
-    }
-  },
+  init() {},
 
   async login(email, password) {
     set({ loading: true });
