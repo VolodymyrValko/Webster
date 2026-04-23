@@ -534,40 +534,14 @@ export default function EditorPage() {
     c.clear();
     c.setBackgroundColor(bg, () => {});
 
-    const objects: fabric.Object[] = (tpl.objects ?? tpl.canvasData?.objects ?? []);
-    const enlivenAndAdd = () => {
-      if (!objects.length) {
-        c.renderAll();
-        suppressRef.current = false;
-        pushHistory(`📋 ${label}`);
-        refreshObjects();
-        return;
-      }
-      // Safety timeout: if enlivening hangs, release suppress after 4s
-      const safety = setTimeout(() => {
-        suppressRef.current = false;
-        c.renderAll();
-        refreshObjects();
-      }, 4000);
-
-      fabric.util.enlivenObjects(objects, (enlivened: fabric.Object[]) => {
-        clearTimeout(safety);
-        enlivened.forEach(obj => c.add(obj));
-        c.renderAll();
-        suppressRef.current = false;
-        pushHistory(`📋 ${label}`);
-        refreshObjects();
-      }, 'fabric');
-    };
-
     if (tpl.canvasData && !tpl.objects) {
-      // user template — use loadFromJSON for proper restoration
+      // user template — use loadFromJSON
       const jsonData = resolveCanvasJsonUrls(tpl.canvasData);
       const safety = setTimeout(() => {
         suppressRef.current = false;
         c.renderAll();
         refreshObjects();
-      }, 4000);
+      }, 5000);
       c.loadFromJSON(jsonData, () => {
         clearTimeout(safety);
         c.renderAll();
@@ -576,7 +550,21 @@ export default function EditorPage() {
         refreshObjects();
       });
     } else {
-      enlivenAndAdd();
+      // built-in template — create objects synchronously via constructors
+      const specs: any[] = tpl.objects ?? [];
+      for (const spec of specs) {
+        const { type, text, ...props } = spec;
+        let obj: fabric.Object | null = null;
+        if (type === 'rect')    obj = new fabric.Rect(props);
+        else if (type === 'ellipse')  obj = new fabric.Ellipse(props);
+        else if (type === 'textbox')  obj = new fabric.Textbox(text ?? '', props);
+        else if (type === 'path')     obj = new fabric.Path(props.path ?? '', props);
+        if (obj) c.add(obj);
+      }
+      c.renderAll();
+      suppressRef.current = false;
+      pushHistory(`📋 ${label}`);
+      refreshObjects();
     }
     setShowTemplates(false);
   };
