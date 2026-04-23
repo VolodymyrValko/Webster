@@ -707,14 +707,15 @@ export default function EditorPage() {
         savedId = data.id;
         navigate(`/editor/${data.id}`, { replace: true });
       }
-      generateThumbnail(c).then(blob => {
+      await generateThumbnail(c).then(blob => new Promise<void>(resolve => {
         const reader = new FileReader();
         reader.onload = () => {
           const dataUrl = reader.result as string;
-          api.patch(`/designs/${savedId}/thumbnail`, { thumbnail: dataUrl });
+          api.patch(`/designs/${savedId}/thumbnail`, { thumbnail: dataUrl }).finally(resolve);
         };
+        reader.onerror = () => resolve();
         reader.readAsDataURL(blob);
-      }).catch(() => {});
+      })).catch(() => {});
       isDirtyRef.current = false;
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);

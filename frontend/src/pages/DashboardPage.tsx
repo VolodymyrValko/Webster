@@ -29,11 +29,18 @@ export default function DashboardPage() {
   const [activeTab,    setActiveTab]    = useState<MainTab>('designs');
   const [tplTab,       setTplTab]       = useState<TplTab>('system');
 
-  useEffect(() => {
+  const fetchData = () => {
     Promise.all([
       api.get('/designs').then(r => setDesigns(r.data)),
       api.get('/templates/mine').then(r => setMyTemplates(r.data)),
     ]).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
+    const onFocus = () => fetchData();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
   const createDesign = async () => {
