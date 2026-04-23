@@ -131,7 +131,7 @@ export default function EditorPage() {
   const pushHistory = useCallback((label = '✏ Зміна') => {
     const c = fabricRef.current;
     if (!c || suppressRef.current) return;
-    const json = JSON.stringify(c.toJSON());
+    const json = JSON.stringify(c.toJSON(['_label', '_locked', '_isSticker']));
     const idx  = historyIndexRef.current;
     const arr  = historyRef.current.slice(0, idx + 1);
     const lbls = historyLabelsRef.current.slice(0, idx + 1);
@@ -601,7 +601,7 @@ export default function EditorPage() {
     const c = fabricRef.current;
     if (!c) return null;
     setSaving(true);
-    const canvasData = c.toJSON();
+    const canvasData = c.toJSON(['_label', '_locked', '_isSticker']);
     try {
       let savedId: string;
       if (design) {
@@ -673,7 +673,7 @@ export default function EditorPage() {
     if (!name) return;
     setSavingTemplate(true);
     try {
-      const canvasData = c.toJSON();
+      const canvasData = c.toJSON(['_label', '_locked', '_isSticker']);
       const thumbnail  = c.toDataURL({ format: 'jpeg', quality: 0.7, multiplier: 0.3 / zoomRef.current });
       await api.post('/templates', {
         name,

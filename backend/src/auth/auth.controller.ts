@@ -32,9 +32,8 @@ export class AuthController {
     try {
       const result = await this.authService.verifyEmail(token);
       const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
-      const encoded = encodeURIComponent(JSON.stringify(result.user));
       return res.redirect(
-        `${frontendUrl}/verify-email?success=1&token=${result.token}&user=${encoded}`,
+        `${frontendUrl}/verify-email?success=1&token=${result.token}`,
       );
     } catch (err) {
       const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
@@ -59,10 +58,6 @@ export class AuthController {
   googleCallback(@Req() req: any, @Res() res: any) {
     const { token } = this.authService.signTokenForUser(req.user);
     const frontendUrl = this.configService.get('FRONTEND_URL', 'http://localhost:3000');
-    const user = req.user;
-    const encoded = encodeURIComponent(
-      JSON.stringify({ id: user.id, email: user.email, name: user.name, avatar: user.avatar }),
-    );
-    res.redirect(`${frontendUrl}/oauth/callback?token=${token}&user=${encoded}`);
+    res.redirect(`${frontendUrl}/oauth/callback?token=${token}`);
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import api from '../api/client';
 
 type Status = 'loading' | 'success' | 'error';
 
@@ -13,18 +14,20 @@ export default function VerifyEmailPage() {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
     const token = params.get('token');
-    const userStr = params.get('user');
     const error = params.get('error');
 
-    if (success === '1' && token && userStr) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userStr));
-        setAuth(token, user);
-        setStatus('success');
-        setTimeout(() => navigate('/dashboard', { replace: true }), 2500);
-      } catch {
-        setStatus('error');
-      }
+    if (success === '1' && token) {
+      localStorage.setItem('token', token);
+      api.get('/users/me')
+        .then(({ data }) => {
+          setAuth(token, data);
+          setStatus('success');
+          setTimeout(() => navigate('/dashboard', { replace: true }), 2500);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          setStatus('error');
+        });
     } else if (error) {
       setStatus('error');
     } else {
