@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuthStore } from '../store/authStore';
 import { Design, Template } from '../types';
+import { resolveUploadUrl } from '../utils/urls';
 import api from '../api/client';
 
 const CANVAS_SIZES = [
@@ -200,7 +201,7 @@ export default function DashboardPage() {
                     shareId={d.id}
                   >
                     {d.thumbnail ? (
-                      <img src={d.thumbnail} alt={d.title} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff' }}
+                      <img src={resolveUploadUrl(d.thumbnail)} alt={d.title} style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff' }}
                         onError={e => (e.currentTarget.style.display = 'none')} />
                     ) : (
                       <div style={{ height: '100%', background: 'linear-gradient(135deg, var(--primary-light), #fde7f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
