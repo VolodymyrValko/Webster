@@ -390,20 +390,31 @@ export default function EditorPage() {
         setIsPublic(data.isPublic || false);
         logicalSizeRef.current = { w: data.width, h: data.height };
         setLogicalSize({ w: data.width, h: data.height });
-        canvas.setDimensions({ width: data.width, height: data.height });
-        canvas.setViewportTransform([1,0,0,1,0,0]);
-        if (data.canvasData?.objects) {
-          suppressRef.current = true;
-          canvas.loadFromJSON(resolveCanvasJsonUrls(data.canvasData), () => {
-            canvas.renderAll();
-            suppressRef.current = false;
-            const bg = data.canvasData.background || '#ffffff';
+        const availW = window.innerWidth - 172 - 270 - 48;
+        const availH = window.innerHeight - 56 - 48;
+        const fitZ = Math.max(0.1, Math.min(1, Math.min(availW / data.width, availH / data.height)));
+        zoomRef.current = fitZ; setZoom(fitZ);
+        canvas.setDimensions({ width: data.width * fitZ, height: data.height * fitZ });
+        canvas.setViewportTransform([fitZ,0,0,fitZ,0,0]);
+        try {
+          if (data.canvasData && Object.keys(data.canvasData).length > 0) {
+            suppressRef.current = true;
+            const bg = (data.canvasData as any).background || '#ffffff';
             setBackground(bg);
-            canvas.setBackgroundColor(bg, canvas.renderAll.bind(canvas));
+            canvas.loadFromJSON(resolveCanvasJsonUrls(data.canvasData), () => {
+              canvas.setDimensions({ width: data.width * fitZ, height: data.height * fitZ });
+              canvas.setViewportTransform([fitZ,0,0,fitZ,0,0]);
+              canvas.renderAll();
+              suppressRef.current = false;
+              canvas.setBackgroundColor(bg, canvas.renderAll.bind(canvas));
+              pushHistory('📂 Завантаження');
+              refreshObjects();
+            });
+          } else {
             pushHistory('📂 Завантаження');
-            refreshObjects();
-          });
-        } else {
+          }
+        } catch {
+          suppressRef.current = false;
           pushHistory('📂 Завантаження');
         }
       }).catch(() => navigate('/dashboard'));
