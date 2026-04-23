@@ -17,7 +17,7 @@ export class Design {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   thumbnail: string;
 
   @Column({ type: 'jsonb', default: '{}' })

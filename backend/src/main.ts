@@ -10,6 +10,9 @@ async function bootstrap() {
 
   app.enableCors({ origin: '*' });
 
+  app.use(require('express').json({ limit: '5mb' }));
+  app.use(require('express').urlencoded({ limit: '5mb', extended: true }));
+
   app.setGlobalPrefix('api');
 
   app.useGlobalPipes(
