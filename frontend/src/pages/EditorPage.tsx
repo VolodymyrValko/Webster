@@ -378,10 +378,8 @@ export default function EditorPage() {
     };
     window.addEventListener('keydown', onKey);
 
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isDirtyRef.current) return;
-      e.preventDefault();
-      e.returnValue = '';
+    const onBeforeUnload = () => {
+      if (isDirtyRef.current) saveDesign();
     };
     window.addEventListener('beforeunload', onBeforeUnload);
 
@@ -866,9 +864,7 @@ export default function EditorPage() {
           onClick={(e) => {
             if (isDirtyRef.current) {
               e.preventDefault();
-              const choice = window.confirm('Є незбережені зміни. Зберегти перед виходом?');
-              if (choice) { saveDesign().then(() => navigate('/dashboard')); }
-              else { isDirtyRef.current = false; navigate('/dashboard'); }
+              saveDesign().then(() => navigate('/dashboard'));
             }
           }}
           style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
