@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fabric } from 'fabric';
+import { resolveUploadUrl, resolveCanvasJsonUrls } from '../utils/urls';
 import Toolbar from '../components/editor/Toolbar';
 import PropertiesPanel from '../components/editor/PropertiesPanel';
 import LayersPanel from '../components/editor/LayersPanel';
@@ -367,7 +368,7 @@ export default function EditorPage() {
         canvas.setViewportTransform([1,0,0,1,0,0]);
         if (data.canvasData?.objects) {
           suppressRef.current = true;
-          canvas.loadFromJSON(data.canvasData, () => {
+          canvas.loadFromJSON(resolveCanvasJsonUrls(data.canvasData), () => {
             canvas.renderAll();
             suppressRef.current = false;
             const bg = data.canvasData.background || '#ffffff';
@@ -466,7 +467,7 @@ export default function EditorPage() {
     form.append('file', file);
     api.post('/upload/image', form, { headers: { 'Content-Type': 'multipart/form-data' } })
       .then(({ data }) => {
-        fabric.Image.fromURL(data.url, (img) => {
+        fabric.Image.fromURL(resolveUploadUrl(data.url), (img) => {
           img.scale(Math.min(300/(img.width||300), 300/(img.height||300)));
           img.set({ left:50, top:50, opacity });
           c.add(img); c.setActiveObject(img); c.renderAll();
@@ -530,9 +531,10 @@ export default function EditorPage() {
     const bg = tpl.background ?? tpl.canvasData?.background ?? '#ffffff';
     setBackground(bg);
     suppressRef.current = true;
-    const jsonData = tpl.canvasData
+    const rawJson = tpl.canvasData
       ? tpl.canvasData
       : { version: '5.3.0', objects: tpl.objects, background: tpl.background };
+    const jsonData = resolveCanvasJsonUrls(rawJson);
     c.loadFromJSON(jsonData, () => {
       c.renderAll();
       suppressRef.current = false;
