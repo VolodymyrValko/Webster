@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { LogoMark } from '../components/Logo';
+import { useAuthStore } from '../store/authStore';
 
 const features = [
   {
@@ -71,6 +72,7 @@ const formats = [
 ];
 
 export default function LandingPage() {
+  const { user } = useAuthStore();
   return (
     <div className="page">
       <Navbar />
@@ -102,12 +104,20 @@ export default function LandingPage() {
             Vizora — ваш онлайн редактор графіки. Дизайн для соціальних мереж, банери, постери та більше — за хвилини.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/register" className="btn btn-lg" style={{ background: '#fff', color: '#6c63ff', fontWeight: 700, boxShadow: '0 8px 32px rgba(108,99,255,0.35)' }}>
-              Почати безкоштовно
-            </Link>
-            <Link to="/login" className="btn btn-lg" style={{ border: '1.5px solid rgba(255,255,255,0.45)', color: '#fff', background: 'transparent' }}>
-              Увійти
-            </Link>
+            {user ? (
+              <Link to="/dashboard" className="btn btn-lg" style={{ background: '#fff', color: '#6c63ff', fontWeight: 700, boxShadow: '0 8px 32px rgba(108,99,255,0.35)' }}>
+                Мій Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/register" className="btn btn-lg" style={{ background: '#fff', color: '#6c63ff', fontWeight: 700, boxShadow: '0 8px 32px rgba(108,99,255,0.35)' }}>
+                  Почати безкоштовно
+                </Link>
+                <Link to="/login" className="btn btn-lg" style={{ border: '1.5px solid rgba(255,255,255,0.45)', color: '#fff', background: 'transparent' }}>
+                  Увійти
+                </Link>
+              </>
+            )}
           </div>
 
           <div style={{ marginTop: 64, display: 'flex', justifyContent: 'center' }}>
@@ -179,7 +189,7 @@ export default function LandingPage() {
           </div>
           <div className="grid-4">
             {formats.map((f) => (
-              <Link key={f.label} to="/register" style={{
+              <Link key={f.label} to={user ? '/dashboard' : '/register'} style={{
                 background: f.color, border: '1.5px solid var(--border)',
                 borderRadius: 'var(--radius)', padding: '20px 16px',
                 textAlign: 'center', display: 'block', textDecoration: 'none',
@@ -210,9 +220,15 @@ export default function LandingPage() {
           <p style={{ color: 'rgba(255,255,255,0.65)', marginBottom: 36, fontSize: 16, maxWidth: 480, margin: '0 auto 36px' }}>
             Приєднуйтесь до тисяч творців, які щодня використовують Vizora.
           </p>
-          <Link to="/register" className="btn btn-lg" style={{ background: '#6c63ff', color: '#fff', boxShadow: '0 8px 32px rgba(108,99,255,0.4)', fontWeight: 700 }}>
-            Почати безкоштовно — без картки
-          </Link>
+          {user ? (
+            <Link to="/dashboard" className="btn btn-lg" style={{ background: '#6c63ff', color: '#fff', boxShadow: '0 8px 32px rgba(108,99,255,0.4)', fontWeight: 700 }}>
+              Перейти до Dashboard
+            </Link>
+          ) : (
+            <Link to="/register" className="btn btn-lg" style={{ background: '#6c63ff', color: '#fff', boxShadow: '0 8px 32px rgba(108,99,255,0.4)', fontWeight: 700 }}>
+              Почати безкоштовно — без картки
+            </Link>
+          )}
         </div>
       </section>
 
