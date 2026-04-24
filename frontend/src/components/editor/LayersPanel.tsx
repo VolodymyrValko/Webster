@@ -7,6 +7,7 @@ interface LayersPanelProps {
   selectedObject: fabric.Object | null;
   onSelect: (obj: fabric.Object) => void;
   onRefresh: () => void;
+  onReorder: () => void;
 }
 
 function getObjectLabel(obj: fabric.Object): string {
@@ -45,7 +46,7 @@ function getObjectIcon(obj: fabric.Object): string {
   return '◈';
 }
 
-export default function LayersPanel({ canvas, objects, selectedObject, onSelect, onRefresh }: LayersPanelProps) {
+export default function LayersPanel({ canvas, objects, selectedObject, onSelect, onRefresh, onReorder }: LayersPanelProps) {
   const reversed = [...objects].reverse();
   const dragIndexRef = useRef<number | null>(null); // index in `reversed`
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -88,6 +89,7 @@ export default function LayersPanel({ canvas, objects, selectedObject, onSelect,
     internal.splice(tgtI, 0, moved);
     canvas.renderAll();
     onRefresh();
+    onReorder();
 
     dragIndexRef.current = null;
     setDragOver(null);
