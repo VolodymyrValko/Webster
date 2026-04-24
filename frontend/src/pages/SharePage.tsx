@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 import { fabric } from 'fabric';
 import { Design } from '../types';
 import api from '../api/client';
@@ -96,13 +97,8 @@ export default function SharePage() {
         padding: '0 24px', height: 56, display: 'flex', alignItems: 'center',
         justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--primary)" />
-            <path d="M8 22L14 10L20 18L23 14L26 22H8Z" fill="white" opacity="0.9" />
-            <circle cx="22" cy="12" r="3" fill="white" opacity="0.7" />
-          </svg>
-          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>Vizora</span>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Logo size={30} textSize={19} />
         </Link>
         <Link to="/register" className="btn btn-primary btn-sm">Створити безкоштовно</Link>
       </nav>
