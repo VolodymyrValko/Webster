@@ -102,7 +102,7 @@ export default function SharePage() {
             <path d="M8 22L14 10L20 18L23 14L26 22H8Z" fill="white" opacity="0.9" />
             <circle cx="22" cy="12" r="3" fill="white" opacity="0.7" />
           </svg>
-          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>Webster</span>
+          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>Vizora</span>
         </Link>
         <Link to="/register" className="btn btn-primary btn-sm">Створити безкоштовно</Link>
       </nav>
@@ -149,7 +149,7 @@ export default function SharePage() {
 
         <div style={{ textAlign: 'center', padding: '16px 0 32px' }}>
           <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>Хочете створити щось подібне?</p>
-          <Link to="/register" className="btn btn-primary btn-lg">Спробувати Webster безкоштовно</Link>
+          <Link to="/register" className="btn btn-primary btn-lg">Спробувати Vizora безкоштовно</Link>
         </div>
       </div>
     </div>
