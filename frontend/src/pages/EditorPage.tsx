@@ -583,29 +583,21 @@ export default function EditorPage() {
     if (!file) return;
     const c = fabricRef.current;
     if (!c) return;
-    const form = new FormData();
-    form.append('file', file);
-    api.post('/upload/image', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-      .then(({ data }) => {
-        fabric.Image.fromURL(resolveUploadUrl(data.url), (img) => {
-          img.scale(Math.min(300/(img.width||300), 300/(img.height||300)));
-          img.set({ left:50, top:50, opacity });
-          c.add(img); c.setActiveObject(img); c.renderAll();
-          pushHistory('🖼 Зображення');
-        });
-      })
-      .catch(() => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          fabric.Image.fromURL(ev.target?.result as string, (img) => {
-            img.scale(Math.min(300/(img.width||300), 300/(img.height||300)));
-            img.set({ left:50, top:50, opacity });
-            c.add(img); c.setActiveObject(img); c.renderAll();
-            pushHistory('🖼 Зображення');
-          });
-        };
-        reader.readAsDataURL(file);
-      });
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      fabric.Image.fromURL(dataUrl, (img) => {
+        const { w, h } = logicalSizeRef.current;
+        const maxDim = Math.min(w, h) * 0.5;
+        img.scale(Math.min(maxDim / (img.width || maxDim), maxDim / (img.height || maxDim)));
+        img.set({ left: 50, top: 50, opacity: opacityRef.current });
+        img.crossOrigin = 'anonymous';
+        c.add(img); c.setActiveObject(img); c.renderAll();
+        pushHistory('🖼 Зображення');
+        refreshObjects();
+      }, { crossOrigin: 'anonymous' });
+    };
+    reader.readAsDataURL(file);
     e.target.value = '';
     setActiveTool('select');
   };
